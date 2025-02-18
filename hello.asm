@@ -1,4 +1,4 @@
-.MODEL TINY ; test
+.MODEL TINY
 .DOSSEG 
 .DATA 
 MSG DB "Hello, World!", 0Dh, 0Ah, '$' 
