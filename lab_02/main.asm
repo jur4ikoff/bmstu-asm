@@ -2,13 +2,6 @@ stackSEG SEGMENT PARA STACK 'STACK'
     DB 200h DUP (?)
 stackSEG ENDS
 
-dataSEG SEGMENT WORD 'DATA'
-HelloMessage DB 13
-    DB 10
-    DB 'Hello World!'
-    DB '$'
-dataSEG ENDS
-
 codeSEG SEGMENT WORD 'CODE'
     ASSUME CS:codeSEG, DS:dataSEG
 dispMsg:
@@ -24,4 +17,11 @@ dispMsg:
     mov ah, 4ch
     int 21h
 codeSEG ENDS
+
+dataSEG SEGMENT WORD 'DATA'
+HelloMessage DB 13
+    DB 10
+    DB 'Hello World!'
+    DB '$'
+dataSEG ENDS
 END dispMsg
