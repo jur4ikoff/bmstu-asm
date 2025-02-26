@@ -17,9 +17,12 @@ dispMsg:
 
     mov dx, offset HelloMessage
     mov ah, 9
-    int 21h
-    int 21h
-    int 21h
+
+    mov cx, 3       
+    LoopStart: ; Метка цикла
+        int 21h    
+        loop LoopStart 
+
 
     mov ah, 4ch
     int 21h
