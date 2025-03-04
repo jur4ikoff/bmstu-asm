@@ -5,6 +5,7 @@ stackSEG SEGMENT PARA STACK 'STACK'
 stackSEG ENDS
 
 dataSEG SEGMENT PARA 'DATA'
+    PUBLIC buffer
     buffer db 100 dup ('$')
 dataSEG ENDS
 
@@ -24,7 +25,7 @@ main:
     mov dl, 10
 	int 21h
 
-    mov dl, buffer[2]
+    mov dl, buffer[2 + 2]
     int 21h
 
     mov ax, 4c00h
