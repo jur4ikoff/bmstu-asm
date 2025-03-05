@@ -1,10 +1,9 @@
 PUBLIC output_X
 EXTRN X: byte
 
-DS2 SEGMENT AT 0b800h
+DS2 SEGMENT AT 0b800h 
 	CA LABEL byte
-	ORG 0
-	;ORG 80 * 2 * 2 + 2 * 2
+	ORG 80 * 2 * 2 + 2 * 2
 	SYMB LABEL word
 DS2 ENDS
 

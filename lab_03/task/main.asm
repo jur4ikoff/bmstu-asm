@@ -19,8 +19,7 @@ main:
 
 	
     mov ah, 2
-
-    mov dl, 10
+    mov dl, 10 
 	int 21h
 
     mov dl, buffer[2 + 2]
