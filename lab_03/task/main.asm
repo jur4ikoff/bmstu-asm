@@ -17,8 +17,6 @@ main:
 
     call input
 
-    ;mov dl, 13
-	;int 21h
 	
     mov ah, 2
 
