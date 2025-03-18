@@ -16,6 +16,7 @@ SD3 ENDS
 CSEG SEGMENT para public 'CODE'
 	assume CS:CSEG, DS:SD1
 output:
+	
 	mov ah, 2
 	int 21h
 	mov dl, 13
@@ -28,6 +29,7 @@ main:
 	mov ds, ax
 	mov dl, S1
 	call output
+
 assume DS:SD2
 	mov ax, SD2
 	mov ds, ax
