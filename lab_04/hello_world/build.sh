@@ -1,4 +1,5 @@
 #!/bin/bash
 
-nasm -f elf64 hello.asm -o hello.o
-ld hello.o -o hello
+OUT="./out/"
+nasm -f elf64 hello.asm -o "$OUT"/hello.o
+ld "$OUT"/hello.o -o hello.exe
