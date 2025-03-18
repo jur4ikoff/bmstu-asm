@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rm *.o *.com *.exe 2> /dev/null
+rm *.o ./out/*.o *.com *.exe 2> /dev/null
