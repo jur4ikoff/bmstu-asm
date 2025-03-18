@@ -11,9 +11,9 @@ CSEG SEGMENT PARA PUBLIC 'CODE'
 	assume CS:CSEG, ES:DS2
 output_X proc near
 	mov ax, DS2
-	mov es, ax
-	mov ah, 10
-	mov al, X
+	mov es, ax ; Перемещает значение из AX в регистр ES. Теперь ES указывает на видеопамять.
+	mov ah, 10 ; Загружает значение 10 в регистр AH. Это атрибут символа 
+	mov al, X ; В al загружаем символ
 	mov symb, ax
 	ret
 output_X endp
