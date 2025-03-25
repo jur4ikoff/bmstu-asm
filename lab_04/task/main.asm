@@ -2,13 +2,13 @@ section .rodata
     input_rows_msg db ">Введите количество строк и стобцов в матрице через пробел: ", 0
     input_matrix_msg db "> Введите элементы матрицы через пробел:", 10, 0
     print_matrix_message db "Вывод матрицы на экран", 10, 0
-    print_matrix_element db "%d ", 10, 0
-    newline db 10, 0
+    newline db 10, 0  
+    debug_pos db "i=%d, j=%d", 10, 0
 
     input_err_msg db "Ошибка ввода числа", 10, 0
     range_err_msg db "Ошибка, размер матрицы должен лежать в диапазоне [1, 9]", 10, 0
     ok_msg db "Успешный ввод", 10, 0
-    finisg_input_msg db "> Ввод матрицы законечен.", 10, "-------------------------------------------", 10, 0
+    finish_input_msg db "> Ввод матрицы законечен.", 10, "-------------------------------------------", 10, 0
     
     
 
@@ -18,6 +18,7 @@ section .rodata
     input_el_fmt db "%d", 0
     output_number_fmt db "%d", 10, 0
     flags_msg db "Flags: CF=%d, ZF=%d, SF=%d", 10, 0
+    output_el_fmt  db "%d ", 10, 0
 
     MAX_CAPACITY: equ 9;
 
@@ -71,9 +72,9 @@ main:
     mov dword [rel elements_entered], 0
 
     mov ebx, 0 ; i = 0
-row_loop:
+input_row_loop:
     mov ecx, 0 ; j = 0
-col_loop:
+input_col_loop:
     ; Проверяем, не введено ли уже rows*cols чисел
     mov eax, [rel elements_entered]
     mov edx, [rel elements_count]
@@ -104,15 +105,16 @@ col_loop:
     ; Переход к следующему столбцу
     inc ecx
     cmp ecx, [rel cols_count]
-    jl col_loop
+    jl input_col_loop
 
     ; Переход к следующей строчке
     inc ebx
     cmp ebx, [rel rows_count]
-    jl row_loop
+    jl input_row_loop
+
 
 input_finished:
-    lea rdi, [rel finisg_input_msg]
+    lea rdi, [rel finish_input_msg]
     mov rax,0 
     call printf wrt ..plt
 
@@ -124,68 +126,52 @@ input_finished:
     syscall
 
 
-
 print_matrix:
-    ;lea rdi, [rel print_matrix_message]
-    ;mov rax, 0
-    ;call printf wrt ..plt
-
-    mov dword [rel elements_entered], 0
-    mov ebx, 0 ; i = 0
+        ; Вывод матрицы
+     mov ebx, 0               ; i = 0
 print_row_loop:
-    ;lea rdi, [rel newline]
-    ;mov eax, 0
-    ;call printf wrt ..plt
-
-    mov ecx, 0 ; j = 0
+    cmp ebx, [rel rows_count]
+    jge print_end            ; если i >= rows_count, выход
+    mov ecx, 0               ; j = 0
 print_col_loop:
-    ; Проверка, что цикл не закончен
-    mov eax, [rel elements_entered]
-    mov edx, [rel elements_count]
-    cmp eax, edx
-    jge print_finished
+    cmp ecx, [rel cols_count]
+    jge print_next_row       ; если j >= cols_count, переход к новой строке
 
+    lea rdi, [rel debug_pos]
+    mov esi, ebx
+    mov edx, ecx
+    xor eax, eax
+    call printf wrt ..plt
+     
     ; Вычисляем matrix[i][j]
-    mov eax, ebx ; eax = i
-    mov edx, [rel cols_count]
-    imul eax, edx
+    mov eax, ebx
+    imul eax, [rel cols_count]
     add eax, ecx
+    lea r11, [rel matrix]
 
-    lea r8, [rel matrix]
-    mov rsi, [r8 + rax * 4]
+    mov rsi, [r11 + rax * 4]  ; esi = matrix[i][j]
 
     ; Вывод элемента
-    lea rdi, [rel print_matrix_element]
-    ;lea rsi, rsi
+    lea rdi, [rel output_el_fmt]
     mov eax, 0
     call printf wrt ..plt
 
-    ; Увеличиваем счетчик выведенных чисел
-    mov eax, [rel elements_entered]
-    inc eax
-    mov [rel elements_entered], eax
-
-    ; Переход к следующему столбцу
     inc ecx
-    cmp rcx, [rel cols_count]
-    jl print_col_loop
+    jmp print_col_loop
 
+print_next_row:
+    ; Переход на новую строку
     lea rdi, [rel newline]
-    xor eax, eax
+    mov eax, 0
     call printf wrt ..plt
 
-    ; Переход к следующей строке
     inc ebx
-    cmp ebx, [rel rows_count]
-    jl row_loop
+    jmp print_row_loop
 
-    
-    
-    
-print_finished:
-    ret
-
-
+print_end:
+     mov rdi, 0;
+    mov rax, 60
+    syscall
 
 
 input:

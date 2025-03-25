@@ -6,7 +6,7 @@ mkdir $OUT 2> /dev/null
 
 for file in *.asm; do
     base=$(basename -s .asm "$file")
-    nasm -f elf64 "$file" -o "$OUT"/"$base".o
+    nasm -g -f elf64 "$file" -o "$OUT"/"$base".o
 done
 
 # nasm -f elf64 *.asm -o "$OUT"/*.o
