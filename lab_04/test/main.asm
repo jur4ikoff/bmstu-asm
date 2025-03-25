@@ -45,10 +45,10 @@ main:
     ja input_err
 
     ; Вычисляем общее количество элементов (rows * cols)
-    mov eax, [rel rows_count]
-    mov edx, [rel cols_count]   ; Загружаем cols_count в регистр
-    imul eax, edx               ; Умножаем
-    mov [rel elements_entered], eax
+   ; mov eax, [rel rows_count]
+    ;mov edx, [rel cols_count]   ; Загружаем cols_count в регистр
+    ;imul eax, edx               ; Умножаем
+    ;mov [rel elements_entered], eax
 
     ; Вывод приглашения для ввода матрицы
     lea rdi, [rel input_matrix_msg]
