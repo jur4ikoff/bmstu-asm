@@ -1,237 +1,140 @@
-section .rodata
-    input_rows_msg db ">Введите количество строк и стобцов в матрице через пробел: ", 0
-    input_matrix_msg db "> Введите элементы матрицы через пробел:", 10, 0
-    print_matrix_message db "Вывод матрицы на экран", 10, 0
-    newline db 10, 0  
-    debug_pos db "i=%d, j=%d", 10, 0
-
-    input_err_msg db "Ошибка ввода числа", 10, 0
-    range_err_msg db "Ошибка, размер матрицы должен лежать в диапазоне [1, 9]", 10, 0
-    ok_msg db "Успешный ввод", 10, 0
-    finish_input_msg db "> Ввод матрицы законечен.", 10, "-------------------------------------------", 10, 0
-    
-    
-
-
-    
-    input_number_fmt db "%d %d", 0
-    input_el_fmt db "%d", 0
-    output_number_fmt db "%d", 10, 0
-    flags_msg db "Flags: CF=%d, ZF=%d, SF=%d", 10, 0
-    output_el_fmt  db "%d ", 10, 0
-
-    MAX_CAPACITY: equ 9;
-
-    ERR_INPUT_NUMBER: equ 1
-    ERR_RANGE: equ 2
-
+section .data
+    prompt_rows db "Enter number of rows (1-9): ", 0
+    prompt_cols db "Enter number of columns (1-9): ", 0
+    prompt_matrix db "Enter matrix elements (one byte each, separated by whitespace):", 10, 0
+    newline db 10, 0
+    space db " ", 0
+    scan_fmt db "%d", 0
+    scan_byte_fmt db "%hhu", 0
 
 section .bss
-    rows_count: resd 1 ; Резервируем место (4 байта) перед переменную
-    cols_count resd 1 ; REServes Dword (4 байта), 1 - Количество
-    elements_count rest 1
-    elements_entered rest 1
-
-    matrix resq 9 * 9
-
+    rows resd 1
+    cols resd 1
+    matrix resb 81  ; 9x9 = 81 байт
 
 section .text
     global main
-    extern scanf, printf
+    extern printf, scanf, exit
+
 main:
-    push rbp
-    mov rbp, rsp
-    sub rsp, 16
+    ; Ввод количества строк
+    mov rdi, prompt_rows
+    xor eax, eax
+    call printf
+    mov rdi, scan_fmt
+    mov rsi, rows
+    xor eax, eax
+    call scanf
 
-    ; Принимаем количество строк и столбцов
-    call input
+    ; Ввод количества столбцов
+    mov rdi, prompt_cols
+    xor eax, eax
+    call printf
+    mov rdi, scan_fmt
+    mov rsi, cols
+    xor eax, eax
+    call scanf
 
-    ; Проверка на корректный ввод
-    cmp eax, 2
-    jne input_err ; Перейти если ZF = 0
-
-    ; Проверка, на то что размер <= 9
-    mov eax, [rel rows_count]           
-    cmp eax, MAX_CAPACITY
-    jg err_range
-    mov eax, [rel cols_count]           
-    cmp eax, MAX_CAPACITY
-    jg err_range   
-
-    ; Считаем общее количество элементов
-    mov eax, [rel rows_count]
-    imul eax, [rel cols_count]
-    mov [rel elements_count], eax
-
-    ; Приглашение к вводу
-    lea rdi, [rel input_matrix_msg]
-    mov rax,0 
-    call printf wrt ..plt
-
-    ; Инициализация нулем
-    mov dword [rel elements_entered], 0
-
-    mov ebx, 0 ; i = 0
-input_row_loop:
-    mov ecx, 0 ; j = 0
-input_col_loop:
-    ; Проверяем, не введено ли уже rows*cols чисел
-    mov eax, [rel elements_entered]
-    mov edx, [rel elements_count]
-    cmp eax, edx
-    jge input_finished 
-
-    ; Вычисляем адрес matrix[i][j]
-    mov eax, ebx ; eax = i
-    mov edx, [rel cols_count]
-    imul eax, edx ; eax = i * cols_count
-    add eax, ecx ; eax = i * cols_count + j
-    lea r8, [rel matrix]
-    lea rsi, [r8 + rax * 4] ; rsi = &matrix[i][j]
-
-    ; Ввод элемента
-    lea rdi, [rel input_el_fmt]
-    mov eax, 0
-    call scanf wrt ..plt
-
+    ; Проверка на корректность размеров (1-9)
+    mov eax, [rows]
     cmp eax, 1
-    jne input_err
+    jl exit_error
+    cmp eax, 9
+    jg exit_error
 
-    ; Увеличивае счетчик введенных чисел
-    mov eax, [rel elements_entered]
-    inc eax
-    mov [rel elements_entered], eax
+    mov eax, [cols]
+    cmp eax, 1
+    jl exit_error
+    cmp eax, 9
+    jg exit_error
 
-    ; Переход к следующему столбцу
+    ; Приглашение для ввода матрицы
+    mov rdi, prompt_matrix
+    xor eax, eax
+    call printf
+
+    ; Чтение матрицы
+    xor ebx, ebx  ; индекс строки (i)
+    mov r12d, [cols]  ; сохраняем cols в регистре
+
+read_rows:
+    cmp ebx, [rows]
+    je print_matrix  ; если все строки прочитаны, переходим к выводу
+
+    xor ecx, ecx  ; индекс столбца (j)
+
+read_cols:
+    cmp ecx, r12d
+    je next_row
+
+    ; Вычисление адреса элемента matrix[i][j]
+    mov eax, ebx
+    mul r12d        ; i * cols_per_row
+    add eax, ecx    ; + j
+    movsxd rax, eax ; расширяем до 64 бит
+    mov rdi, scan_byte_fmt
+    lea rsi, [matrix + rax]
+    xor eax, eax
+    call scanf
+
     inc ecx
-    cmp ecx, [rel cols_count]
-    jl input_col_loop
+    jmp read_cols
 
-    ; Переход к следующей строчке
+next_row:
     inc ebx
-    cmp ebx, [rel rows_count]
-    jl input_row_loop
-
-
-input_finished:
-    lea rdi, [rel finish_input_msg]
-    mov rax,0 
-    call printf wrt ..plt
-
-    call print_matrix
-    mov rsp, rbp
-    pop rbp
-    mov rdi, 0;
-    mov rax, 60
-    syscall
-
+    jmp read_rows
 
 print_matrix:
-        ; Вывод матрицы
-    mov ebx, 0 ; i = 0
-    mov [rel elements_entered], ebx
-print_row_loop:
-    mov ecx, 0 ; j = 0
-print_col_loop:
+    mov rdi, newline
+    xor eax, eax
+    call printf  ; новая строка перед выводом матрицы
 
-    push rbp
-    mov rbp, rsp
-    sub rsp, 16
+    xor ebx, ebx  ; индекс строки (i)
 
-    ; Проверяем, не введено ли уже rows*cols чисел
-    mov eax, [rel elements_entered]
-    mov edx, [rel elements_count]
-    cmp eax, edx
-    jge print_end 
+print_rows:
+    cmp ebx, [rows]
+    je exit_program
 
-    ; Вычисляем адрес matrix[i][j]
-    mov eax, ebx ; eax = i
-    mov edx, [rel cols_count]
-    imul eax, edx ; eax = i * cols_count
-    add eax, ecx ; eax = i * cols_count + j
-    lea r8, [rel matrix]
-    mov rsi, [r8 + rax * 4] ; rsi = &matrix[i][j]
+    xor ecx, ecx  ; индекс столбца (j)
 
-    ; Ввод элемента
-    lea rdi, [rel output_number_fmt]
-    mov eax, 0
-    call printf wrt ..plt
+print_cols:
+    cmp ecx, [cols]
+    je print_newline
 
-    ; Увеличивае счетчик введенных чисел
-    mov eax, [rel elements_entered]
-    inc eax
-    mov [rel elements_entered], eax
+    ; Вычисление адреса элемента matrix[i][j]
+    mov eax, ebx
+    mul dword [cols]  ; i * cols_per_row
+    add eax, ecx      ; + j
+    movsxd rax, eax   ; расширяем до 64 бит
+    movzx edi, byte [matrix + rax]
 
-    ; Переход к следующему столбцу
+    ; Вывод числа
+    push rbx
+    push rcx
+    mov rsi, rdi
+    mov rdi, scan_byte_fmt
+    xor eax, eax
+    call printf
+    mov rdi, space
+    xor eax, eax
+    call printf
+    pop rcx
+    pop rbx
+
     inc ecx
-    cmp ecx, [rel cols_count]
-    jl print_col_loop
+    jmp print_cols
 
-
-    lea rdi, [rel newline]
-    mov eax, 0
-    call printf wrt ..plt
-
-    ; Переход к следующей строчке
+print_newline:
+    mov rdi, newline
+    xor eax, eax
+    call printf
     inc ebx
-    cmp ebx, [rel rows_count]
-    jl print_row_loop
+    jmp print_rows
 
-    leave
-    ret
-
-
-print_end:
-    lea rdi, [rel finish_input_msg]
-    mov rax,0 
-    call printf wrt ..plt
-
-    mov rdi, 0;
-    mov rax, 60
-    syscall
-
-
-input:
-    push rbp
-    mov rbp, rsp
-    sub rsp, 16
-
-    ; Приглашение к вводу 
-    lea rdi, [rel input_rows_msg]
-    mov eax, 0
-    call printf wrt ..plt
-
-    ; Пользовательский ввод
-    lea rdi, [rel input_number_fmt]
-    lea rsi, [rel rows_count]
-    lea rdx, [rel cols_count]
-    mov eax, 0
-    call scanf wrt ..plt
-    
-    mov rsp, rbp
-    pop rbp
-    ret
-
-
-input_err:
-    lea rdi, [rel input_err_msg]
-    mov rax, 0
-    call printf wrt ..plt
-
-    mov rdi, ERR_INPUT_NUMBER
-    jmp exit;
-
-err_range:
-    lea rdi, [rel range_err_msg]
-    mov rax, 0
-    call printf wrt ..plt
-
-    mov rdi, ERR_RANGE
+exit_error:
+    mov rdi, 1
     call exit
-    
 
-exit:
-    ; Метка выходит из программы. В регистре RDI должен лежать нужный код возврата
-    mov rax, 60
-    syscall
-    
+exit_program:
+    mov rdi, 0
+    call exit
