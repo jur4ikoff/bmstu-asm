@@ -5,7 +5,7 @@ section .rodata
     input_err_msg db "Ошибка ввода числа", 10, 0
     range_err_msg db "Ошибка, размер матрицы должен лежать в диапазоне [1, 9]", 10, 0
     ok_msg db "Успешный ввод", 10, 0
-    input_overflow_msg db "> Введено достаточно чисел. Остальные данные игнорируются.", 10, 0
+    finisg_input_msg db "> Ввод матрицы законечен.", 10, "-------------------------------------------", 10, 0
     
 
 
@@ -63,10 +63,52 @@ main:
     mov rax,0 
     call printf wrt ..plt
 
+    ; Инициализация нулем
     mov dword [rel elements_entered], 0
 
-    lea rdi, [rel output_number_fmt]
-    mov rsi, [rel elements_count]
+    mov ebx, 0 ; i = 0
+row_loop:
+    mov ecx, 0 ; j = 0
+col_loop:
+    ; Проверяем, не введено ли уже rows*cols чисел
+    mov eax, [rel elements_entered]
+    mov edx, [rel elements_count]
+    cmp eax, edx
+    jge input_finished 
+
+    ; Вычисляем адрес matrix[i][j]
+    mov eax, ebx ; eax = i
+    mov edx, [rel cols_count]
+    imul eax, edx ; eax = i * cols_count
+    add eax, ecx ; eax = i * cols_count + j
+    lea r8, [rel matrix]
+    lea rsi, [r8 + rax * 4] ; rsi = &matrix[i][j]
+
+    ; Ввод элемента
+    lea rdi, [rel input_el_fmt]
+    mov eax, 0
+    call scanf wrt ..plt
+
+    cmp eax, 1
+    jne input_err
+
+    ; Увеличивае счетчик введенных чисел
+    mov eax, [rel elements_entered]
+    inc eax
+    mov [rel elements_entered], eax
+
+    ; Переход к следующему столбцу
+    inc ecx
+    cmp ecx, [rel cols_count]
+    jl col_loop
+
+    ; Переход к следующей строчке
+    inc ebx
+    cmp ebx, [rel rows_count]
+    jl row_loop
+
+input_finished:
+    lea rdi, [rel finisg_input_msg]
     mov rax,0 
     call printf wrt ..plt
 
