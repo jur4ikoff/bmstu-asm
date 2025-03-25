@@ -1,8 +1,10 @@
+;  прямоугольная цифровая удалить строку с наибольшим количеством нечётных элементов
 section .rodata
     input_rows_msg db ">Введите количество строк и стобцов в матрице через пробел: ", 0
     input_matrix_msg db "> Введите элементы матрицы через пробел:", 10, 0
     print_matrix_message db "Вывод матрицы на экран", 10, 0
     newline db 10, 0 
+    pass db "PASS", 10, 0
 
 
     input_err_msg db "Ошибка ввода числа", 10, 0
@@ -13,6 +15,9 @@ section .rodata
     input_number_fmt db "%d %d", 0
     input_el_fmt db "%hhd", 0
     output_number_fmt db "%d", 10, 0
+    print_row_fmt db "Row %d has %d odd elements", 10, 0
+
+    max_row_fmt db "Row %d has the most odd elements (%d)", 10, 0
     flags_msg db "Flags: CF=%d, ZF=%d, SF=%d", 10, 0
     output_el_fmt  db "%hhd ", 9, 0
     debug_pos db "%d %d", 10, 0
@@ -30,6 +35,10 @@ section .bss
     elements_entered rest 1
 
     matrix resq 9 * 9
+
+        ; Временные переменные
+    max_odd_count resd 1  ; максимальное количество нечётных
+    max_odd_row resd 1     ; строка с максимальным количеством нечётных
 
 
 section .text
@@ -67,8 +76,8 @@ main:
 
     ; Инициализация нулем
     mov dword [rel elements_entered], 0
-
     mov ebx, 0 ; i = 0
+
 input_row_loop:
     mov r12, 0 ; j = 0
 input_col_loop:
@@ -114,6 +123,10 @@ input_finished:
     mov rax,0 
     call printf wrt ..plt
 
+    call find_row_with_max_odds
+    ; Удаляем эту строку
+    call remove_max_odd_row
+
     call print_matrix
     mov rsp, rbp
     pop rbp
@@ -131,7 +144,7 @@ print_matrix:
     mov ebx, 0 ; i = 0
     mov [rel elements_entered], ebx
 print_row_loop:
-    mov ecx, 0 ; j = 0
+    mov r12, 0 ; j = 0
 print_col_loop:
     ; Проверяем, не введено ли уже rows*cols чисел
     mov eax, [rel elements_entered]
@@ -143,16 +156,14 @@ print_col_loop:
     mov eax, ebx ; eax = i
     mov edx, [rel cols_count]
     imul eax, edx ; eax = i * cols_count
-    add eax, ecx ; eax = i * cols_count + j
+    add eax, r12d ; eax = i * cols_count + j
     lea r8, [rel matrix]
     mov rsi, [r8 + rax] ; rsi = &matrix[i][j]
 
-    push rcx
     ; Ввод элемента
     lea rdi, [rel output_el_fmt]
     mov eax, 0
     call printf wrt ..plt
-    pop rcx
 
     ; Увеличивае счетчик введенных чисел
     mov eax, [rel elements_entered]
@@ -160,16 +171,14 @@ print_col_loop:
     mov [rel elements_entered], eax
 
     ; Переход к следующему столбцу
-    inc ecx
+    inc r12
 
-    cmp ecx, [rel cols_count]
+    cmp r12d, [rel cols_count]
     jl print_col_loop
 
-    push rcx
     lea rdi, [rel newline]
     mov eax, 0
     call printf wrt ..plt
-    pop rcx
 
     ; Переход к следующей строчке
     inc ebx
@@ -230,4 +239,3 @@ exit:
     ; Метка выходит из программы. В регистре RDI должен лежать нужный код возврата
     mov rax, 60
     syscall
-    
