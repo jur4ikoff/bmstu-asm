@@ -2,7 +2,7 @@
 section .rodata
     input_rows_msg db ">Введите количество строк и стобцов в матрице через пробел: ", 0
     input_matrix_msg db "> Введите элементы матрицы через пробел:", 10, 0
-    print_matrix_message db "Вывод матрицы на экран", 10, 0
+    print_matrix_message db "Вывод матрицы без строки с наибольшим количеством нечетных элементов", 10, 0
     newline db 10, 0 
     pass db "PASS", 10, 0
 
@@ -14,30 +14,31 @@ section .rodata
     
     input_number_fmt db "%d %d", 0
     input_el_fmt db "%hhd", 0
-    output_number_fmt db "%d", 10, 0
-    print_row_fmt db "Row %d has %d odd elements", 10, 0
+    print_hdd_number db "%hhd", 10, 0
+    print_d_number db "%d", 10, 0
 
     max_row_fmt db "Row %d has the most odd elements (%d)", 10, 0
     flags_msg db "Flags: CF=%d, ZF=%d, SF=%d", 10, 0
     output_el_fmt  db "%hhd ", 9, 0
-    debug_pos db "%d %d", 10, 0
+    debug_pos db "%d", 10, 0
 
-    MAX_CAPACITY: equ 9;
+    MAX_CAPACITY equ 9
 
     ERR_INPUT_NUMBER: equ 1
     ERR_RANGE: equ 2
 
 
 section .bss
-    rows_count: resd 1 ; Резервируем место (4 байта) перед переменную
+    rows_count resd 1 ; Резервируем место (4 байта) перед переменную
     cols_count resd 1 ; REServes Dword (4 байта), 1 - Количество
-    elements_count rest 1
-    elements_entered rest 1
+    elements_count resd 1
+    cur_elements resd 1
 
     matrix resq 9 * 9
 
         ; Временные переменные
     max_odd_count resd 1  ; максимальное количество нечётных
+    cur_odd_count resd 1 ; Текущее количество нечетных чисел
     max_odd_row resd 1     ; строка с максимальным количеством нечётных
 
 
@@ -57,11 +58,11 @@ main:
     jne input_err ; Перейти если ZF = 0
 
     ; Проверка, на то что размер <= 9
-    mov eax, [rel rows_count]           
+    mov eax, [rel rows_count]          
     cmp eax, MAX_CAPACITY
     jg err_range
-    mov eax, [rel cols_count]           
-    cmp eax, MAX_CAPACITY
+   
+    cmp eax,  MAX_CAPACITY
     jg err_range   
 
     ; Считаем общее количество элементов
@@ -69,24 +70,33 @@ main:
     imul eax, [rel cols_count]
     mov [rel elements_count], eax
 
+    call input_matrix
+    
+    call find_max_odd_row
+    ; Удаляем эту строку
+    ; call remove_max_odd_row
+
+    call print_matrix
+
+    mov rsp, rbp
+    pop rbp
+    ret 
+    mov rdi, 0
+    call exit
+    
+input_matrix:
     ; Приглашение к вводу
     lea rdi, [rel input_matrix_msg]
     mov rax,0 
     call printf wrt ..plt
 
     ; Инициализация нулем
-    mov dword [rel elements_entered], 0
+    mov dword [rel cur_elements], 0
     mov ebx, 0 ; i = 0
 
 input_row_loop:
     mov r12, 0 ; j = 0
 input_col_loop:
-    ; Проверяем, не введено ли уже rows*cols чисел
-    mov eax, [rel elements_entered]
-    mov edx, [rel elements_count]
-    cmp eax, edx
-    jge input_finished 
-
     ; Вычисляем адрес matrix[i][j]
     mov eax, ebx ; eax = i
     mov edx, [rel cols_count]
@@ -104,9 +114,9 @@ input_col_loop:
     jne input_err
 
     ; Увеличивае счетчик введенных чисел
-    mov eax, [rel elements_entered]
+    mov eax, [rel cur_elements]
     inc eax
-    mov [rel elements_entered], eax
+    mov [rel cur_elements], eax
 
     ; Переход к следующему столбцу
     inc r12
@@ -118,21 +128,11 @@ input_col_loop:
     cmp ebx, [rel rows_count]
     jl input_row_loop
 
-input_finished:
     lea rdi, [rel finish_input_msg]
     mov rax,0 
     call printf wrt ..plt
+    ret
 
-    call find_max_odd_row
-    ; Удаляем эту строку
-    ; call remove_max_odd_row
-
-    call print_matrix
-    mov rsp, rbp
-    pop rbp
-
-    mov rdi, 0
-    call exit
 
 
 print_matrix:
@@ -142,16 +142,10 @@ print_matrix:
 
         ; Вывод матрицы
     mov ebx, 0 ; i = 0
-    mov [rel elements_entered], ebx
+    mov dword [rel cur_elements], 0
 print_row_loop:
     mov r12, 0 ; j = 0
 print_col_loop:
-    ; Проверяем, не введено ли уже rows*cols чисел
-    mov eax, [rel elements_entered]
-    mov edx, [rel elements_count]
-    cmp eax, edx
-    jge print_end 
-
     ; Вычисляем адрес matrix[i][j]
     mov eax, ebx ; eax = i
     mov edx, [rel cols_count]
@@ -160,15 +154,15 @@ print_col_loop:
     lea r8, [rel matrix]
     mov rsi, [r8 + rax] ; rsi = &matrix[i][j]
 
-    ; Ввод элемента
+    ; Вывод элемента
     lea rdi, [rel output_el_fmt]
     mov eax, 0
     call printf wrt ..plt
 
     ; Увеличивае счетчик введенных чисел
-    mov eax, [rel elements_entered]
+    mov eax, [rel cur_elements]
     inc eax
-    mov [rel elements_entered], eax
+    mov [rel cur_elements], eax
 
     ; Переход к следующему столбцу
     inc r12
@@ -185,15 +179,8 @@ print_col_loop:
     cmp ebx, [rel rows_count]
     jl print_row_loop
 
-
-print_end:
-    lea rdi, [rel newline]
-    mov rax,0 
-    call printf wrt ..plt
-
-    mov rdi, 0;
-    mov rax, 60
-    syscall
+    ; Сюда доходит
+    ret
 
 
 input:
@@ -235,10 +222,76 @@ err_range:
     call exit
     
 
+
+find_max_odd_row:
+    ; Поиск максимальной строки
+    mov ebx, 0 ; i = 0
+    mov dword [rel cur_elements], 0
+    mov dword [rel max_odd_row], 0
+    mov dword [rel max_odd_count], 0 ; Обнуляем счетчик нечетных чиселs
+    
+
+find_row_loop:
+    mov dword [rel cur_odd_count], 0 ; Обнуляем счетчик нечетных чисел
+    mov r12, 0 ; j = 0
+
+find_col_loop:
+    ; Вычисляем адрес matrix[i][j]
+    mov eax, ebx ; eax = i
+    mov edx, [rel cols_count]
+    imul eax, edx ; eax = i * cols_count
+    add eax, r12d ; eax = i * cols_count + j
+    lea r8, [rel matrix]
+    mov rsi, [r8 + rax] ; rsi = &matrix[i][j]
+
+    call add_odd_count
+
+    
+    ; Увеличивае счетчик введенных чисел
+    mov eax, [rel cur_elements]
+    inc eax
+    mov [rel cur_elements], eax
+
+    ; Переход к следующему столбцу
+    inc r12
+    cmp r12d, [rel cols_count]
+    jl find_col_loop
+
+        ; Вывод элемента
+    lea rdi, [rel debug_pos]
+    mov rsi, [rel cur_odd_count]
+    mov eax, 0
+    call printf wrt ..plt
+
+    ; Переход к следующей строчке
+    inc ebx
+    cmp ebx, [rel rows_count]
+    jl find_row_loop
+
+    lea rdi, [rel pass]
+    mov rax, 0
+    call printf wrt ..plt
+
+    lea rdi, [rel print_d_number]
+    mov rsi, [rel max_odd_count]
+    mov rax, 0
+    call printf wrt ..plt
+
+    lea rdi, [rel print_d_number]
+    mov rsi, [rel max_odd_row]
+    mov rax, 0
+    call printf wrt ..plt
+
+    ret
+
+
+add_odd_count:
+    mov eax, [rel cur_odd_count]
+    inc eax
+    mov [rel cur_odd_count], eax 
+    ret
+
 exit:
     ; Метка выходит из программы. В регистре RDI должен лежать нужный код возврата
     mov rax, 60
     syscall
-
-find_max_odd_row:
-    ret
