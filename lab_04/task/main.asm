@@ -3,6 +3,7 @@ section .rodata
     input_rows_msg db ">Введите количество строк и стобцов в матрице через пробел: ", 0
     input_matrix_msg db "> Введите элементы матрицы через пробел:", 10, 0
     print_matrix_message db "Вывод матрицы без строки с наибольшим количеством нечетных элементов", 10, 0
+    print_err_no_odd db "Нет ни одного нечетного числа", 10, 0
     newline db 10, 0 
     pass db "PASS", 10, 0
 
@@ -26,6 +27,7 @@ section .rodata
 
     ERR_INPUT_NUMBER: equ 1
     ERR_RANGE: equ 2
+    ERR_NO_ODD: equ 3
 
 
 section .bss
@@ -71,10 +73,16 @@ main:
     mov [rel elements_count], eax
 
     call input_matrix
-    
+
+    ; Ищем строку с максимальным количеством нечетных цифр
     call find_max_odd_row
+
+    mov eax, [rel max_odd_count]
+    cmp eax, 0
+    je no_odd_number
+
     ; Удаляем эту строку
-    ; call remove_max_odd_row
+    call delete_row
 
     call print_matrix
 
@@ -159,11 +167,6 @@ print_col_loop:
     mov eax, 0
     call printf wrt ..plt
 
-    ; Увеличивае счетчик введенных чисел
-    mov eax, [rel cur_elements]
-    inc eax
-    mov [rel cur_elements], eax
-
     ; Переход к следующему столбцу
     inc r12
 
@@ -244,8 +247,7 @@ find_col_loop:
     lea r8, [rel matrix]
     mov rsi, [r8 + rax] ; rsi = &matrix[i][j]
 
-    call add_odd_count
-
+    call check_odd
     
     ; Увеличивае счетчик введенных чисел
     mov eax, [rel cur_elements]
@@ -257,40 +259,98 @@ find_col_loop:
     cmp r12d, [rel cols_count]
     jl find_col_loop
 
-        ; Вывод элемента
-    lea rdi, [rel debug_pos]
-    mov rsi, [rel cur_odd_count]
-    mov eax, 0
-    call printf wrt ..plt
+    ; Замена 
+    mov eax, [rel cur_odd_count]
+    cmp eax, [rel max_odd_count]
+    jle .no_update        ; CHECK  ; если cur_odd_count <= max_odd_count, не обновляем
+    
+    ; Обновляем max_odd_count и max_odd_row
+    mov eax, [rel cur_odd_count]
+    mov [rel max_odd_count], eax
+    ; mov ebx, [current_row]
+    mov [rel max_odd_row], ebx
 
+.no_update:
     ; Переход к следующей строчке
     inc ebx
     cmp ebx, [rel rows_count]
     jl find_row_loop
 
-    lea rdi, [rel pass]
-    mov rax, 0
-    call printf wrt ..plt
-
-    lea rdi, [rel print_d_number]
-    mov rsi, [rel max_odd_count]
-    mov rax, 0
-    call printf wrt ..plt
-
-    lea rdi, [rel print_d_number]
-    mov rsi, [rel max_odd_row]
-    mov rax, 0
-    call printf wrt ..plt
-
+    ; Выход
     ret
 
-
-add_odd_count:
+check_odd:
+    ; Вход: RSI содержит число (младший байт - SIL)
+    ; Выход: CF=1 если нечётное, CF=0 если чётное
+    
+    test sil, 1
+    jnz .odd
+    ret
+.odd:
     mov eax, [rel cur_odd_count]
     inc eax
     mov [rel cur_odd_count], eax 
-    ret
 
+    ret
+    
+no_odd_number:
+    lea rdi, [rel print_err_no_odd]
+    mov rax, 0
+    call printf wrt ..plt
+
+    mov rdi, ERR_NO_ODD
+    call exit
+
+
+; Процедура удаляет строку с индексом max_odd_row из матрицы
+; Не использует стек, работает только с регистрами
+; Разрушаемые регистры: rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
+delete_row: 
+    call exit
+
+    ; Проверяем max_odd_row на валидность
+    mov ecx, [rel max_odd_row]
+    cmp ecx, eax
+    jae .end_proc           ; если max_odd_row >= rows_count, выходим
+
+    ; Загружаем cols_count и вычисляем размер строки в байтах
+    mov edx, [rel cols_count]
+    shl rdx, 3              ; rdx = cols_count * 8 (размер строки в байтах)
+
+    ; Вычисляем адреса для копирования
+    mov rsi, [rel matrix]  ; rsi = начало матрицы
+    mov rdi, rcx            ; rdi = max_odd_row
+    imul rdi, rdx           ; rdi = смещение удаляемой строки
+    add rsi, rdi            ; rsi = адрес удаляемой строки
+    lea rdi, [rsi + rdx]    ; rdi = адрес следующей строки
+
+    ; Вычисляем количество строк для перемещения
+    mov r8d, [rel rows_count]
+    sub r8d, ecx            ; r8d = rows_count - max_odd_row
+    dec r8d                 ; r8d = количество строк для перемещения
+    jle .update_counts      ; если нечего перемещать, переходим к обновлению счетчиков
+
+    ; Вычисляем размер блока для копирования
+    mov r9, r8
+    imul r9, rdx            ; r9 = размер блока в байтах
+
+    ; Копируем данные
+    mov rcx, r9             ; rcx = количество байт для копирования
+    rep movsb               ; копируем байты
+
+.update_counts:
+    ; Уменьшаем rows_count
+    mov r10, [rel rows_count ]
+    dec dword [r10]
+
+    ; Обновляем elements_count
+    mov eax, [r10]          ; eax = новый rows_count
+    mov r11, [rel cols_count ]
+    imul eax, [r11]
+    mov [rel elements_count], eax
+
+.end_proc:
+    ret
 exit:
     ; Метка выходит из программы. В регистре RDI должен лежать нужный код возврата
     mov rax, 60
