@@ -123,9 +123,9 @@ input_finished:
     mov rax,0 
     call printf wrt ..plt
 
-    call find_row_with_max_odds
+    call find_max_odd_row
     ; Удаляем эту строку
-    call remove_max_odd_row
+    ; call remove_max_odd_row
 
     call print_matrix
     mov rsp, rbp
@@ -239,3 +239,6 @@ exit:
     ; Метка выходит из программы. В регистре RDI должен лежать нужный код возврата
     mov rax, 60
     syscall
+
+find_max_odd_row:
+    ret
