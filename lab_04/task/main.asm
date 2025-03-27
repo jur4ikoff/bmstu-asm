@@ -348,24 +348,21 @@ delete_row:
     dec ecx
     mov [rel rows_count], ecx
 
-    ; Вычисляем адрес строки для удаления (max_odd_row * cols_count * 8)
+    ; Вычисляем адрес строки для удаления (max_odd_row * cols_count)
     mov eax, [rel max_odd_row]
     mov ebx, [rel cols_count]
     imul eax, ebx
-    ; shl eax, 3  ; умножение на 8 (размер qword)
     lea r8, [rel matrix]
     lea rsi, [r8 + rax]  ; адрес начала строки для удаления
 
     ; Вычисляем адрес следующей строки
     mov eax, [rel cols_count]
-    ; shl eax, 3  ; умножение на 8 (размер qword)
     add rax, rsi  ; rax теперь указывает на следующую строку
 
     ; Вычисляем количество байт для перемещения (все строки после удаляемой)
     mov ecx, [rel rows_count]
     sub ecx, [rel max_odd_row]  ; rows_count уже уменьшено на 1
     imul ecx, [rel cols_count]
-    ; shl ecx, 3  ; умножение на 8 (размер qword)
 
     ; Копируем данные (перемещаем строки вверх)
     mov rdi, rsi  ; куда копируем
@@ -375,10 +372,7 @@ delete_row:
 end_program:
     ; Завершение программы
     ret
-    ;mov eax, 60    ; syscall номер для exit
-    ;xor edi, edi   ; код возврата 0
-    ;syscall
-    
+
 exit:
     ; Метка выходит из программы. В регистре RDI должен лежать нужный код возврата
     mov rax, 60
