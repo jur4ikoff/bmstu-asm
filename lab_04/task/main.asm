@@ -90,11 +90,15 @@ main:
 
     mov rsp, rbp
     pop rbp
-    ret 
+
     mov rdi, 0
     call exit
     
 input_matrix:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+
     ; Приглашение к вводу
     lea rdi, [rel input_matrix_msg]
     mov rax,0 
@@ -115,14 +119,17 @@ input_col_loop:
     lea r8, [rel matrix]
     lea rsi, [r8 + rax] ; rsi = &matrix[i][j]
 
+
     ; Ввод элемента
     lea rdi, [rel input_el_fmt]
     mov eax, 0
     call scanf wrt ..plt
 
+    ;call exit
+
     cmp eax, 1
     jne input_err
-
+    
     ; Увеличивае счетчик введенных чисел
     mov eax, [rel cur_elements]
     inc eax
@@ -141,11 +148,18 @@ input_col_loop:
     lea rdi, [rel finish_input_msg]
     mov rax,0 
     call printf wrt ..plt
+
+    mov rsp, rbp
+    pop rbp
     ret
 
 
 
 print_matrix:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+
     lea rdi, [rel print_matrix_message]
     mov rax, 0
     call printf wrt ..plt
@@ -153,6 +167,7 @@ print_matrix:
         ; Вывод матрицы
     mov ebx, 0 ; i = 0
     mov dword [rel cur_elements], 0
+
 print_row_loop:
     mov r12, 0 ; j = 0
 print_col_loop:
@@ -184,7 +199,8 @@ print_col_loop:
     cmp ebx, [rel rows_count]
     jl print_row_loop
 
-    ; Сюда доходит
+    mov rsp, rbp
+    pop rbp
     ret
 
 
@@ -237,6 +253,10 @@ err_empty_output:
 
 
 find_max_odd_row:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+
     ; Поиск максимальной строки
     mov ebx, 0 ; i = 0
     mov dword [rel cur_elements], 0
@@ -287,6 +307,8 @@ find_col_loop:
     jl find_row_loop
 
     ; Выход
+    mov rsp, rbp
+    pop rbp
     ret
 
 check_odd:
@@ -315,7 +337,7 @@ no_odd_number:
 delete_row: 
     mov eax, [rel rows_count]
     cmp eax, 1
-    jge err_empty_output
+    je err_empty_output
 
     mov eax, [rel max_odd_row]
     cmp eax, [rel rows_count]
@@ -330,20 +352,20 @@ delete_row:
     mov eax, [rel max_odd_row]
     mov ebx, [rel cols_count]
     imul eax, ebx
-    shl eax, 3  ; умножение на 8 (размер qword)
+    ; shl eax, 3  ; умножение на 8 (размер qword)
     lea r8, [rel matrix]
     lea rsi, [r8 + rax]  ; адрес начала строки для удаления
 
     ; Вычисляем адрес следующей строки
     mov eax, [rel cols_count]
-    shl eax, 3  ; умножение на 8 (размер qword)
+    ; shl eax, 3  ; умножение на 8 (размер qword)
     add rax, rsi  ; rax теперь указывает на следующую строку
 
     ; Вычисляем количество байт для перемещения (все строки после удаляемой)
     mov ecx, [rel rows_count]
     sub ecx, [rel max_odd_row]  ; rows_count уже уменьшено на 1
     imul ecx, [rel cols_count]
-    shl ecx, 3  ; умножение на 8 (размер qword)
+    ; shl ecx, 3  ; умножение на 8 (размер qword)
 
     ; Копируем данные (перемещаем строки вверх)
     mov rdi, rsi  ; куда копируем
