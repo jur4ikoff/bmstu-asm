@@ -4,6 +4,7 @@ section .rodata
     input_matrix_msg db "> Введите элементы матрицы через пробел:", 10, 0
     print_matrix_message db "Вывод матрицы без строки с наибольшим количеством нечетных элементов", 10, 0
     print_err_no_odd db "Нет ни одного нечетного числа", 10, 0
+    print_err_empty_output db "Пустой вывод", 10, 0
     newline db 10, 0 
     pass db "PASS", 10, 0
 
@@ -28,6 +29,7 @@ section .rodata
     ERR_INPUT_NUMBER: equ 1
     ERR_RANGE: equ 2
     ERR_NO_ODD: equ 3
+    ERR_EMPTY_INPUT: equ 4
 
 
 section .bss
@@ -225,6 +227,14 @@ err_range:
     call exit
     
 
+err_empty_output:
+    lea rdi, [rel print_err_empty_output]
+    mov rax, 0
+    call printf wrt ..plt
+
+    mov rdi, ERR_EMPTY_INPUT
+    call exit
+
 
 find_max_odd_row:
     ; Поиск максимальной строки
@@ -302,55 +312,51 @@ no_odd_number:
     call exit
 
 
-; Процедура удаляет строку с индексом max_odd_row из матрицы
-; Не использует стек, работает только с регистрами
-; Разрушаемые регистры: rax, rcx, rdx, rsi, rdi, r8, r9, r10, r11
 delete_row: 
-    call exit
+    mov eax, [rel rows_count]
+    cmp eax, 1
+    jge err_empty_output
 
-    ; Проверяем max_odd_row на валидность
-    mov ecx, [rel max_odd_row]
-    cmp ecx, eax
-    jae .end_proc           ; если max_odd_row >= rows_count, выходим
+    mov eax, [rel max_odd_row]
+    cmp eax, [rel rows_count]
+    jge end_program  ; если max_odd_row >= rows_count, ничего не делаем
 
-    ; Загружаем cols_count и вычисляем размер строки в байтах
-    mov edx, [rel cols_count]
-    shl rdx, 3              ; rdx = cols_count * 8 (размер строки в байтах)
+    ; Вычисляем количество строк после удаления
+    mov ecx, [rel rows_count]
+    dec ecx
+    mov [rel rows_count], ecx
 
-    ; Вычисляем адреса для копирования
-    mov rsi, [rel matrix]  ; rsi = начало матрицы
-    mov rdi, rcx            ; rdi = max_odd_row
-    imul rdi, rdx           ; rdi = смещение удаляемой строки
-    add rsi, rdi            ; rsi = адрес удаляемой строки
-    lea rdi, [rsi + rdx]    ; rdi = адрес следующей строки
+    ; Вычисляем адрес строки для удаления (max_odd_row * cols_count * 8)
+    mov eax, [rel max_odd_row]
+    mov ebx, [rel cols_count]
+    imul eax, ebx
+    shl eax, 3  ; умножение на 8 (размер qword)
+    lea r8, [rel matrix]
+    lea rsi, [r8 + rax]  ; адрес начала строки для удаления
 
-    ; Вычисляем количество строк для перемещения
-    mov r8d, [rel rows_count]
-    sub r8d, ecx            ; r8d = rows_count - max_odd_row
-    dec r8d                 ; r8d = количество строк для перемещения
-    jle .update_counts      ; если нечего перемещать, переходим к обновлению счетчиков
+    ; Вычисляем адрес следующей строки
+    mov eax, [rel cols_count]
+    shl eax, 3  ; умножение на 8 (размер qword)
+    add rax, rsi  ; rax теперь указывает на следующую строку
 
-    ; Вычисляем размер блока для копирования
-    mov r9, r8
-    imul r9, rdx            ; r9 = размер блока в байтах
+    ; Вычисляем количество байт для перемещения (все строки после удаляемой)
+    mov ecx, [rel rows_count]
+    sub ecx, [rel max_odd_row]  ; rows_count уже уменьшено на 1
+    imul ecx, [rel cols_count]
+    shl ecx, 3  ; умножение на 8 (размер qword)
 
-    ; Копируем данные
-    mov rcx, r9             ; rcx = количество байт для копирования
-    rep movsb               ; копируем байты
+    ; Копируем данные (перемещаем строки вверх)
+    mov rdi, rsi  ; куда копируем
+    mov rsi, rax   ; откуда копируем
+    rep movsq
 
-.update_counts:
-    ; Уменьшаем rows_count
-    mov r10, [rel rows_count ]
-    dec dword [r10]
-
-    ; Обновляем elements_count
-    mov eax, [r10]          ; eax = новый rows_count
-    mov r11, [rel cols_count ]
-    imul eax, [r11]
-    mov [rel elements_count], eax
-
-.end_proc:
+end_program:
+    ; Завершение программы
     ret
+    ;mov eax, 60    ; syscall номер для exit
+    ;xor edi, edi   ; код возврата 0
+    ;syscall
+    
 exit:
     ; Метка выходит из программы. В регистре RDI должен лежать нужный код возврата
     mov rax, 60
