@@ -1,6 +1,6 @@
 
 section .rodata
-    input_number_fmt db "%d %d", 0
+    input_number_fmt db "%hhd %hhd", 0
     input_el_fmt db "%hhd", 0
 
     input_rows_msg db ">Введите количество строк и стобцов в матрице через пробел: ", 0
