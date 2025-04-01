@@ -13,9 +13,10 @@ section .rodata
         db "> Выберите операцию: ", 0
 
     fmt db "%d", 0
-    test_fmt db "%hu", 0
     newline db 10, 0
     error_msg db "Неверно выбрана команда", 10, 0
+
+    test_fmt  db  "%016b", 10, 0 
 
 section .data 
     align 8 ; Выравнивание
@@ -27,15 +28,11 @@ section .data
         dq print_truncated_hex ; 3
         dq check_power_of_two ; 4
 
-section .bss
-    global number
-    operation: resw 1 ; Выделяем число размером 2 байта
-    number: resw 1
-    buffer   resb 16 
 
 section .text
     global main, exit
     extern printf, scanf
+
 main:
     push rbp
     mov rbp, rsp
@@ -72,30 +69,12 @@ main:
 
     ; Вызываем соответствующую функцию
     lea rbx, [rel operations]
-    mov di, [rel number]
     call [rbx + rax*8]
 
-    movzx rax, word [rel number]     ; Берём 16 бит из number
-    lea rdi, [rel buffer]            ; Указатель на буфер (RIP-relative)
-    mov rcx, 16                      ; 16 бит = 16 символов
-
-    ; Преобразуем биты в ASCII '0'/'1'
-.convert_loop:
-    shl ax, 1                        ; Сдвигаем влево, старший бит -> CF
-    mov byte [rdi], '0'              ; По умолчанию '0'
-    adc byte [rdi], 0                ; Если CF=1, то '0' + 1 = '1'
-    inc rdi                          ; Перемещаем указатель
-    loop .convert_loop               ; Повторяем 16 раз
-
-    ; Добавляем перевод строки
-    mov byte [rdi], 10               ; '\n'
-
-    ; Выводим на экран (sys_write)
-    mov rax, 1                       ; sys_write
-    mov rdi, 1                       ; stdout
-    lea rsi, [rel buffer]            ; Адрес буфера (RIP-relative)
-    mov rdx, 17                      ; 16 символов + '\n'
-    syscall
+    lea rdi, [rel test_fmt]
+    movzx rsi, word [rel number]
+    mov rax, 0
+    call printf wrt ..plt
 
     ; Зацикливание
     jmp .menu_loop
@@ -110,3 +89,8 @@ exit:
     mov rax, 60
     syscall
 
+
+section .bss
+    global number
+     number: resw 1
+    operation: resw 1 ; Выделяем число размером 2 байта
