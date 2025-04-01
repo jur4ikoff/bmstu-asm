@@ -1,15 +1,13 @@
 ;  прямоугольная цифровая удалить строку с наибольшим количеством нечётных элементов
 section .rodata
-    input_matrix_msg db "> Введите элементы матрицы через пробел:", 10, 0
     print_matrix_message db "Вывод матрицы без строки с наибольшим количеством нечетных элементов", 10, 0
     newline db 10, 0 
     pass db "PASS", 10, 0
 
 
     ok_msg db "Успешный ввод", 10, 0
-    finish_input_msg db "> Ввод матрицы законечен.", 10, "-------------------------------------------", 10, 0
     
-    input_el_fmt db "%hhd", 0
+    
     print_hdd_number db "%hhd", 10, 0
     print_d_number db "%d", 10, 0
 
@@ -22,13 +20,14 @@ section .rodata
 
 
 section .bss
-    global rows_count, cols_count  ; Экспортируем переменные
+    global rows_count, cols_count, cur_elements  ; Экспортируем переменные
     rows_count resd 1 ; Резервируем место (4 байта) перед переменную
     cols_count resd 1 ; REServes Dword (4 байта), 1 - Количество
 
     elements_count resd 1
     cur_elements resd 1
 
+    global matrix
     matrix resq 9 * 9
 
         ; Временные переменные
@@ -40,7 +39,7 @@ section .bss
 section .text
     global main, exit
     extern scanf, printf
-    extern input_count
+    extern input_count, input_matrix
     extern err_input, err_range
     ; extern err_empty_output, err_no_odd_number
 
@@ -75,6 +74,7 @@ main:
 
     ; Принимаем элементы матрицы
     call input_matrix
+    call print_matrix
 
         mov rsp, rbp
     pop rbp
@@ -105,112 +105,56 @@ main:
 ;     mov rdi, 0
 ;     call exit
     
-input_matrix:
+
+
+
+print_matrix:
     push rbp
     mov rbp, rsp
     sub rsp, 16
 
-    ; Приглашение к вводу
-    lea rdi, [rel input_matrix_msg]
-    mov rax,0 
+    lea rdi, [rel print_matrix_message]
+    mov rax, 0
     call printf wrt ..plt
 
-    ; Инициализация нулем
-    mov dword [rel cur_elements], 0
+        ; Вывод матрицы
     mov ebx, 0 ; i = 0
+    mov dword [rel cur_elements], 0
 
-input_row_loop:
+print_row_loop:
     mov r12, 0 ; j = 0
-input_col_loop:
+print_col_loop:
     ; Вычисляем адрес matrix[i][j]
     mov eax, ebx ; eax = i
     mov edx, [rel cols_count]
     imul eax, edx ; eax = i * cols_count
     add eax, r12d ; eax = i * cols_count + j
     lea r8, [rel matrix]
-    lea rsi, [r8 + rax] ; rsi = &matrix[i][j]
+    mov rsi, [r8 + rax] ; rsi = &matrix[i][j]
 
-
-    ; Ввод элемента
-    lea rdi, [rel input_el_fmt]
+    ; Вывод элемента
+    lea rdi, [rel output_el_fmt]
     mov eax, 0
-    call scanf wrt ..plt
-
-    cmp eax, 1
-    jne err_input
-    
-    ; Увеличивае счетчик введенных чисел
-    mov eax, [rel cur_elements]
-    inc eax
-    mov [rel cur_elements], eax
+    call printf wrt ..plt
 
     ; Переход к следующему столбцу
     inc r12
+
     cmp r12d, [rel cols_count]
-    jl input_col_loop
+    jl print_col_loop
+
+    lea rdi, [rel newline]
+    mov eax, 0
+    call printf wrt ..plt
 
     ; Переход к следующей строчке
     inc ebx
     cmp ebx, [rel rows_count]
-    jl input_row_loop
-
-    lea rdi, [rel finish_input_msg]
-    mov rax,0 
-    call printf wrt ..plt
+    jl print_row_loop
 
     mov rsp, rbp
     pop rbp
     ret
-
-
-
-; print_matrix:
-;     push rbp
-;     mov rbp, rsp
-;     sub rsp, 16
-
-;     lea rdi, [rel print_matrix_message]
-;     mov rax, 0
-;     call printf wrt ..plt
-
-;         ; Вывод матрицы
-;     mov ebx, 0 ; i = 0
-;     mov dword [rel cur_elements], 0
-
-; print_row_loop:
-;     mov r12, 0 ; j = 0
-; print_col_loop:
-;     ; Вычисляем адрес matrix[i][j]
-;     mov eax, ebx ; eax = i
-;     mov edx, [rel cols_count]
-;     imul eax, edx ; eax = i * cols_count
-;     add eax, r12d ; eax = i * cols_count + j
-;     lea r8, [rel matrix]
-;     mov rsi, [r8 + rax] ; rsi = &matrix[i][j]
-
-;     ; Вывод элемента
-;     lea rdi, [rel output_el_fmt]
-;     mov eax, 0
-;     call printf wrt ..plt
-
-;     ; Переход к следующему столбцу
-;     inc r12
-
-;     cmp r12d, [rel cols_count]
-;     jl print_col_loop
-
-;     lea rdi, [rel newline]
-;     mov eax, 0
-;     call printf wrt ..plt
-
-;     ; Переход к следующей строчке
-;     inc ebx
-;     cmp ebx, [rel rows_count]
-;     jl print_row_loop
-
-;     mov rsp, rbp
-;     pop rbp
-;     ret
 
 
 
