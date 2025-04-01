@@ -9,8 +9,6 @@ section .rodata
         fmt_positive db "0x%X", 10, 0      ; Формат для положительных чисел
         fmt_negative db "-0x%X",10,  0     ; Формат для отрицательных чисел
 
-section .data
-
 section .text
     global print_decimal, print_truncated_hex, check_power_of_two
     extern printf, scanf
@@ -20,7 +18,6 @@ section .text
 print_decimal:
     push rbp
     mov rbp, rsp
-    sub rsp, 16
 
     lea rdi, [rel prompt_decimal]
     mov rax, 0
@@ -38,6 +35,9 @@ print_decimal:
 
 ; Функция выводит младшие 8 бит числа в 16сс. Знаковое представлдение
 print_truncated_hex:
+    push rbp
+    mov rbp, rsp
+
     lea rdi, [rel promt_hex]
     mov rax, 0
     call printf wrt ..plt
@@ -76,6 +76,7 @@ print_truncated_hex:
     
     ; Завершение программы
     mov edi, 0
+    
+    mov rsp, rbp
+    pop rbp
     ret
-
-check_power_of_two:

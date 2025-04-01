@@ -4,7 +4,8 @@ section .note.GNU-stack noalloc noexec nowrite progbits
 extern err_operation, err_input
 extern input_number, print_decimal, print_truncated_hex, check_power_of_two
 section .rodata
-    menu db 10, "Меню:", 10
+    menu db 10, "_______________________________", 10
+        db "Меню:", 10
         db "0. Выход", 10
         db "1. Ввести число в 2 с.с", 10
         db "2. Вывести число в 10 с.с", 10
@@ -71,10 +72,10 @@ main:
     lea rbx, [rel operations]
     call [rbx + rax*8]
 
-    lea rdi, [rel test_fmt]
-    movzx rsi, word [rel number]
-    mov rax, 0
-    call printf wrt ..plt
+    ; lea rdi, [rel test_fmt]
+    ; movzx rsi, word [rel number]
+    ; mov rax, 0
+    ; call printf wrt ..plt
 
     ; Зацикливание
     jmp .menu_loop
