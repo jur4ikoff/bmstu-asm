@@ -15,8 +15,7 @@ section .rodata
 section .text
     global input_count, input_matrix
     extern printf, scanf ; "Импортируем функии из glibc"
-    extern rows_count, cols_count  ; "Импортируем глобальные переменные"
-    extern matrix, cur_elements
+    extern rows_count, cols_count, matrix  ; "Импортируем глобальные переменные"
     extern err_input
 
 ; Процедура принимает из stdin 2 целых числа, количество строк и столбцов матрицы
@@ -44,6 +43,7 @@ input_count:
 
 
 
+; Функция принимает элементы матрицы
 input_matrix:
     push rbp
     mov rbp, rsp
@@ -55,11 +55,10 @@ input_matrix:
     call printf wrt ..plt
 
     ; Инициализация нулем
-    mov dword [rel cur_elements], 0
     mov ebx, 0 ; i = 0
-
 input_row_loop:
     mov r12, 0 ; j = 0
+    
 input_col_loop:
     ; Вычисляем адрес matrix[i][j]
     mov eax, ebx ; eax = i
@@ -77,11 +76,6 @@ input_col_loop:
 
     cmp eax, 1
     jne err_input
-    
-    ; Увеличивае счетчик введенных чисел
-    mov eax, [rel cur_elements]
-    inc eax
-    mov [rel cur_elements], eax
 
     ; Переход к следующему столбцу
     inc r12

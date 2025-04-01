@@ -19,17 +19,12 @@ section .rodata
 
 
 section .bss
-    global rows_count, cols_count, cur_elements  ; Экспортируем переменные
+    global rows_count, cols_count, matrix  ; Делаем переменные глобальные
     rows_count resd 1 ; Резервируем место (4 байта) перед переменную
     cols_count resd 1 ; REServes Dword (4 байта), 1 - Количество
-
-    elements_count resd 1
-    cur_elements resd 1
-
-    global matrix
     matrix resb 9 * 9
 
-        ; Временные переменные
+    ; Временные переменные
     max_odd_count resd 1  ; максимальное количество нечётных
     cur_odd_count resd 1 ; Текущее количество нечетных чисел
     max_odd_row resd 1     ; строка с максимальным количеством нечётных
@@ -65,11 +60,6 @@ main:
     cmp eax, MAX_CAPACITY ; Сравнение операнда с максимальной вместимостью
     jg err_range          ; (ZF = 0 && SF = OF) перейти, если больше eax > MAX_CAPACITY
 
-    
-    ; Считаем общее количество элементов
-    mov eax, [rel rows_count]
-    imul eax, [rel cols_count]
-    mov [rel elements_count], eax
 
     ; Принимаем элементы матрицы
     call input_matrix
@@ -115,7 +105,6 @@ print_matrix:
 
         ; Вывод матрицы
     mov ebx, 0 ; i = 0
-    mov dword [rel cur_elements], 0
 
 print_row_loop:
     mov r12, 0 ; j = 0
