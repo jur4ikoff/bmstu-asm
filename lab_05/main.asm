@@ -13,12 +13,13 @@ section .rodata
         db "> Выберите операцию: ", 0
 
     fmt db "%d", 0
+    test_fmt db "%hu", 0
     newline db 10, 0
     error_msg db "Неверно выбрана команда", 10, 0
 
 section .data 
     align 8 ; Выравнивание
-    number dw 0
+    
     global operations
     operations:
         dq input_number ; 1
@@ -27,7 +28,10 @@ section .data
         dq check_power_of_two ; 4
 
 section .bss
-    operation resd 1 ; Выделяем число размером 4 байта
+    global number
+    operation: resw 1 ; Выделяем число размером 2 байта
+    number: resw 1
+    buffer   resb 16 
 
 section .text
     global main, exit
@@ -40,7 +44,7 @@ main:
 .menu_loop:
     ; Вывод меню на экран
     lea rdi, [rel menu]
-    xor eax, eax
+    mov eax, 0
     call printf wrt ..plt
 
     ; Считываем команду с экрана
@@ -68,8 +72,30 @@ main:
 
     ; Вызываем соответствующую функцию
     lea rbx, [rel operations]
-    mov rdi, [rel number]
+    mov di, [rel number]
     call [rbx + rax*8]
+
+    movzx rax, word [rel number]     ; Берём 16 бит из number
+    lea rdi, [rel buffer]            ; Указатель на буфер (RIP-relative)
+    mov rcx, 16                      ; 16 бит = 16 символов
+
+    ; Преобразуем биты в ASCII '0'/'1'
+.convert_loop:
+    shl ax, 1                        ; Сдвигаем влево, старший бит -> CF
+    mov byte [rdi], '0'              ; По умолчанию '0'
+    adc byte [rdi], 0                ; Если CF=1, то '0' + 1 = '1'
+    inc rdi                          ; Перемещаем указатель
+    loop .convert_loop               ; Повторяем 16 раз
+
+    ; Добавляем перевод строки
+    mov byte [rdi], 10               ; '\n'
+
+    ; Выводим на экран (sys_write)
+    mov rax, 1                       ; sys_write
+    mov rdi, 1                       ; stdout
+    lea rsi, [rel buffer]            ; Адрес буфера (RIP-relative)
+    mov rdx, 17                      ; 16 символов + '\n'
+    syscall
 
     ; Зацикливание
     jmp .menu_loop
