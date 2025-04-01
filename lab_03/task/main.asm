@@ -1,4 +1,4 @@
-EXTRN input: far
+EXTRN input_count: far
 
 stackSEG SEGMENT PARA STACK 'STACK'
     db 100 dup(0)
@@ -15,7 +15,7 @@ main:
     mov ax, dataSEG
     mov ds, ax
 
-    call input
+    call input_count
 
 	
     mov ah, 2
