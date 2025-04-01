@@ -4,7 +4,6 @@ section .rodata
     newline db 10, 0 
     pass db "PASS", 10, 0
 
-
     ok_msg db "Успешный ввод", 10, 0
     
     
@@ -28,7 +27,7 @@ section .bss
     cur_elements resd 1
 
     global matrix
-    matrix resq 9 * 9
+    matrix resb 9 * 9
 
         ; Временные переменные
     max_odd_count resd 1  ; максимальное количество нечётных
@@ -105,9 +104,6 @@ main:
 ;     mov rdi, 0
 ;     call exit
     
-
-
-
 print_matrix:
     push rbp
     mov rbp, rsp
