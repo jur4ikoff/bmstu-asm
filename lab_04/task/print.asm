@@ -1,3 +1,5 @@
+section .note.GNU-stack noalloc noexec nowrite progbits
+
 section .rodata
     print_matrix_message db "Вывод матрицы без строки с наибольшим количеством нечетных элементов", 10, 0
     newline db 10, 0 

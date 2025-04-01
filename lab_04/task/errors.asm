@@ -1,3 +1,5 @@
+section .note.GNU-stack noalloc noexec nowrite progbits
+
 section .rodata
     input_err_msg db "Ошибка ввода числа", 10, 0
     range_err_msg db "Ошибка, размер матрицы должен лежать в диапазоне [1, 9]", 10, 0
@@ -32,21 +34,21 @@ err_range:
     jmp exit
     
 
-; err_empty_output:
-;     lea rdi, [rel err_empty_output_msg]
-;     mov rax, 0
-;     call printf wrt ..plt
+err_empty_output:
+    lea rdi, [rel err_empty_output_msg]
+    mov rax, 0
+    call printf wrt ..plt
 
-;     mov rdi, ERR_EMPTY_INPUT
-;     lea rax, [rel exit]
-;     jmp rax
+    mov rdi, ERR_EMPTY_INPUT
+    lea rax, [rel exit]
+    jmp rax
     
 
-; err_no_odd_number:
-;     lea rdi, [rel err_no_odd_msg]
-;     mov rax, 0
-;     call printf wrt ..plt
+err_no_odd_number:
+    lea rdi, [rel err_no_odd_msg]
+    mov rax, 0
+    call printf wrt ..plt
 
-;     mov rdi, ERR_NO_ODD
-;     lea rax, [rel exit]
-;     jmp rax
+    mov rdi, ERR_NO_ODD
+    lea rax, [rel exit]
+    jmp rax

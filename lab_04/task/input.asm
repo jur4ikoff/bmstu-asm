@@ -1,7 +1,11 @@
+section .note.GNU-stack noalloc noexec nowrite progbits
+
 
 section .rodata
     input_number_fmt db "%hhd %hhd", 0
     input_el_fmt db "%hhd", 0
+    test_fmt db "pass el %hhd i = %hdd j = %hdd",10, 0
+    pass db "PASS", 10, 0
 
     input_rows_msg db ">Введите количество строк и стобцов в матрице через пробел: ", 0
     input_matrix_msg db "> Введите элементы матрицы через пробел:", 10, 0
@@ -47,7 +51,7 @@ input_matrix:
 
     ; Приглашение к вводу
     lea rdi, [rel input_matrix_msg]
-    mov rax,0 
+    mov rax, 0 
     call printf wrt ..plt
 
     ; Инициализация нулем
@@ -64,7 +68,6 @@ input_col_loop:
     lea r8, [rel matrix]
     lea rsi, [r8 + rax] ; rsi = &matrix[i][j]
 
-
     ; Ввод элемента
     lea rdi, [rel input_el_fmt]
     mov eax, 0
@@ -73,17 +76,35 @@ input_col_loop:
     cmp eax, 1
     jne err_input
 
+
+    lea rdi, [rel test_fmt]
+    lea r8, [rel matrix]
+    mov rsi, [r8 + rax] ; rsi = &matrix[i][j] 
+    mov edx, ebx
+    mov rcx, r12
+    mov rax, 0
+    call printf wrt ..plt
+
+
     ; Переход к следующему столбцу
     inc r12
-    movzx eax, byte [rel cols_count]
-    cmp r12d, eax
+    movzx rax, byte [rel cols_count]
+    cmp r12, rax
     jl input_col_loop
-
+    
+        lea rdi, [rel test_fmt]
+    lea r8, [rel matrix]
+    mov rsi, [r8 + rax] ; rsi = &matrix[i][j] 
+    mov edx, ebx
+    mov rcx, r12
+    mov rax, 0
+    call printf wrt ..plt
+    
     ; Переход к следующей строчке
     inc ebx
     movzx eax, byte [rel rows_count]
     cmp ebx, eax
-    jl input_row_loop
+    jl input_row_loop ; перейти, если меньше
 
     lea rdi, [rel finish_input_msg]
     mov rax,0 
