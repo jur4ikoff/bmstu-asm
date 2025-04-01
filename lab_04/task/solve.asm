@@ -98,11 +98,11 @@ delete_row:
     movzx ebx, byte [rel cols_count]
     imul eax, ebx
     lea r8, [rel matrix]
-    lea rsi, [r8 + rax]  ; адрес начала строки для удаления
+    lea rdi, [r8 + rax]  ; адрес начала строки для удаления
 
     ; Вычисляем адрес следующей строки
     movzx eax, byte [rel cols_count]
-    add rax, rsi  ; rax теперь указывает на следующую строку
+    add rax, rdi  ; rax теперь указывает на следующую строку
 
     ; Вычисляем количество байт для перемещения (все строки после удаляемой)
     movzx rcx, byte [rel rows_count]
@@ -112,7 +112,7 @@ delete_row:
     imul rcx, r8
 
     ; Копируем данные (перемещаем строки вверх)
-    mov rdi, rsi  ; куда копируем
+    ; rdi  ; куда копируем
     mov rsi, rax   ; откуда копируем
     rep movsq
 
