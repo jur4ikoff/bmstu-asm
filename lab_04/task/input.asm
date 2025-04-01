@@ -4,8 +4,6 @@ section .note.GNU-stack noalloc noexec nowrite progbits
 section .rodata
     input_number_fmt db "%hhd %hhd", 0
     input_el_fmt db "%hhd", 0
-    test_fmt db "pass el %hhd i = %hdd j = %hdd",10, 0
-    pass db "PASS", 10, 0
 
     input_rows_msg db ">Введите количество строк и стобцов в матрице через пробел: ", 0
     input_matrix_msg db "> Введите элементы матрицы через пробел:", 10, 0
@@ -62,7 +60,7 @@ input_row_loop:
 input_col_loop:
     ; Вычисляем адрес matrix[i][j]
     mov eax, ebx ; eax = i
-    mov edx, [rel cols_count]
+    movzx edx, byte [rel cols_count]
     imul eax, edx ; eax = i * cols_count
     add eax, r12d ; eax = i * cols_count + j
     lea r8, [rel matrix]
@@ -76,29 +74,11 @@ input_col_loop:
     cmp eax, 1
     jne err_input
 
-
-    lea rdi, [rel test_fmt]
-    lea r8, [rel matrix]
-    mov rsi, [r8 + rax] ; rsi = &matrix[i][j] 
-    mov edx, ebx
-    mov rcx, r12
-    mov rax, 0
-    call printf wrt ..plt
-
-
     ; Переход к следующему столбцу
     inc r12
     movzx rax, byte [rel cols_count]
     cmp r12, rax
     jl input_col_loop
-    
-        lea rdi, [rel test_fmt]
-    lea r8, [rel matrix]
-    mov rsi, [r8 + rax] ; rsi = &matrix[i][j] 
-    mov edx, ebx
-    mov rcx, r12
-    mov rax, 0
-    call printf wrt ..plt
     
     ; Переход к следующей строчке
     inc ebx

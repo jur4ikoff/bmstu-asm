@@ -23,7 +23,7 @@ find_row_loop:
 find_col_loop:
     ; Вычисляем адрес matrix[i][j]
     mov eax, ebx ; eax = i
-    mov edx, [rel cols_count]
+    movzx edx, byte [rel cols_count]
     imul eax, edx ; eax = i * cols_count
     add eax, r12d ; eax = i * cols_count + j
     lea r8, [rel matrix]
@@ -89,30 +89,32 @@ delete_row:
     jge end_delete
 
     ; Вычисляем количество строк после удаления
-    mov ah, byte [rel rows_count]
-    dec ah
-    mov [rel rows_count], ah
+    mov al, [rel rows_count]
+    dec al
+    mov [rel rows_count], al
 
-;     ; Вычисляем адрес строки для удаления (max_odd_row * cols_count)
-;     mov eax, [rel max_odd_row]
-;     mov ebx, [rel cols_count]
-;     imul eax, ebx
-;     lea r8, [rel matrix]
-;     lea rsi, [r8 + rax]  ; адрес начала строки для удаления
+    ; Вычисляем адрес строки для удаления (max_odd_row * cols_count)
+    movzx eax, byte [rel max_odd_row]
+    movzx ebx, byte [rel cols_count]
+    imul eax, ebx
+    lea r8, [rel matrix]
+    lea rsi, [r8 + rax]  ; адрес начала строки для удаления
 
-;     ; Вычисляем адрес следующей строки
-;     mov eax, [rel cols_count]
-;     add rax, rsi  ; rax теперь указывает на следующую строку
+    ; Вычисляем адрес следующей строки
+    movzx eax, byte [rel cols_count]
+    add rax, rsi  ; rax теперь указывает на следующую строку
 
-;     ; Вычисляем количество байт для перемещения (все строки после удаляемой)
-;     mov ecx, [rel rows_count]
-;     sub ecx, [rel max_odd_row]  ; rows_count уже уменьшено на 1
-;     imul ecx, [rel cols_count]
+    ; Вычисляем количество байт для перемещения (все строки после удаляемой)
+    movzx rcx, byte [rel rows_count]
+    movzx r8, byte [rel max_odd_row]
+    sub rcx, r8 ; rows_count уже уменьшено на 1
+    movzx r8, byte [rel cols_count]
+    imul rcx, r8
 
-;     ; Копируем данные (перемещаем строки вверх)
-;     mov rdi, rsi  ; куда копируем
-;     mov rsi, rax   ; откуда копируем
-;     rep movsq
+    ; Копируем данные (перемещаем строки вверх)
+    mov rdi, rsi  ; куда копируем
+    mov rsi, rax   ; откуда копируем
+    rep movsq
 
 ; Завершение удаления
 end_delete:

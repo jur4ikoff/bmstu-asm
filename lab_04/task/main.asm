@@ -49,7 +49,7 @@ main:
 
     ; Принимаем элементы матрицы
     call input_matrix
-    call exit
+
     ; Ищем строку с максимальным количеством нечетных цифр
     call find_max_odd_row
 
@@ -57,7 +57,7 @@ main:
     movzx eax, byte [rel max_odd_count]
     cmp eax, 0
     je err_no_odd_number
-    call exit
+
     ; Удаляем эту строку
     call delete_row
 

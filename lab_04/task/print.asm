@@ -29,7 +29,7 @@ print_row_loop:
 print_col_loop:
     ; Вычисляем адрес matrix[i][j]
     mov eax, ebx ; eax = i
-    mov edx, [rel cols_count]
+    movzx edx, byte [rel cols_count]
     imul eax, edx ; eax = i * cols_count
     add eax, r12d ; eax = i * cols_count + j
     lea r8, [rel matrix]
