@@ -58,7 +58,7 @@ input_matrix:
     mov ebx, 0 ; i = 0
 input_row_loop:
     mov r12, 0 ; j = 0
-    
+
 input_col_loop:
     ; Вычисляем адрес matrix[i][j]
     mov eax, ebx ; eax = i
@@ -79,12 +79,14 @@ input_col_loop:
 
     ; Переход к следующему столбцу
     inc r12
-    cmp r12d, [rel cols_count]
+    movzx eax, byte [rel cols_count]
+    cmp r12d, eax
     jl input_col_loop
 
     ; Переход к следующей строчке
     inc ebx
-    cmp ebx, [rel rows_count]
+    movzx eax, byte [rel rows_count]
+    cmp ebx, eax
     jl input_row_loop
 
     lea rdi, [rel finish_input_msg]

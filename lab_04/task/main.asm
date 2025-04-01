@@ -20,8 +20,8 @@ section .rodata
 
 section .bss
     global rows_count, cols_count, matrix  ; Делаем переменные глобальные
-    rows_count resd 1 ; Резервируем место (4 байта) перед переменную
-    cols_count resd 1 ; REServes Dword (4 байта), 1 - Количество
+    rows_count resb 1 ; Резервируем место (4 байта) перед переменную
+    cols_count resb 1 ; REServes Dword (4 байта), 1 - Количество
     matrix resb 9 * 9
 
     ; Временные переменные
@@ -51,23 +51,21 @@ main:
 
     
     ; Проверка, на то что количество строк <= 9
-    mov eax, [rel rows_count]          
+    movzx eax, byte [rel rows_count]       
     cmp eax, MAX_CAPACITY ; Сравнение операнда с максимальной вместимостью
     jg err_range          ; (ZF = 0 && SF = OF) перейти, если больше eax > MAX_CAPACITY
 
-    ; Проверка, на то что количество столбцов <= 9
-    mov eax, [rel cols_count]          
+    ; Проверка, на то что количество строк <= 9
+    movzx eax, byte [rel cols_count]       
     cmp eax, MAX_CAPACITY ; Сравнение операнда с максимальной вместимостью
     jg err_range          ; (ZF = 0 && SF = OF) перейти, если больше eax > MAX_CAPACITY
-
 
     ; Принимаем элементы матрицы
     call input_matrix
     call print_matrix
 
-        mov rsp, rbp
+    mov rsp, rbp
     pop rbp
-
     mov rdi, 0
     call exit
 
@@ -103,11 +101,11 @@ print_matrix:
     mov rax, 0
     call printf wrt ..plt
 
-        ; Вывод матрицы
+    ; Вывод матрицы
     mov ebx, 0 ; i = 0
-
 print_row_loop:
     mov r12, 0 ; j = 0
+
 print_col_loop:
     ; Вычисляем адрес matrix[i][j]
     mov eax, ebx ; eax = i
@@ -124,8 +122,8 @@ print_col_loop:
 
     ; Переход к следующему столбцу
     inc r12
-
-    cmp r12d, [rel cols_count]
+    movzx eax, byte [rel cols_count]
+    cmp r12d, eax
     jl print_col_loop
 
     lea rdi, [rel newline]
@@ -134,7 +132,8 @@ print_col_loop:
 
     ; Переход к следующей строчке
     inc ebx
-    cmp ebx, [rel rows_count]
+    movzx eax, byte [rel rows_count]
+    cmp ebx, eax
     jl print_row_loop
 
     mov rsp, rbp
