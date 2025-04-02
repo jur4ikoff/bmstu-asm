@@ -96,7 +96,7 @@ delete_row:
     ; Вычисляем адрес строки для удаления (max_odd_row * cols_count)
     movzx eax, byte [rel max_odd_row]
     movzx ebx, byte [rel cols_count]
-    imul eax, ebx
+    imul eax, ebx ;  (max_odd_row * cols_count)
     lea r8, [rel matrix]
     lea rdi, [r8 + rax]  ; адрес начала строки для удаления
 
@@ -113,7 +113,10 @@ delete_row:
 
     ; Копируем данные (перемещаем строки вверх)
     ; rdi  ; куда копируем
-    mov rsi, rax   ; откуда копируем
+    mov rsi, rax ; Адрес следующий строки, после строки для удаления
+    ; RDI адрес начала строки для удаления
+    ; rep Префикс повторения (выполняет movsq столько раз, сколько задано в RCX) В моем случае это количество стобцов
+    ; movsq	Копирует 8 байт (QWORD) из [RSI] в [RDI] и обновляет указатели
     rep movsq
 
 ; Завершение удаления
