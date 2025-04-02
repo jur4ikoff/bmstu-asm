@@ -27,7 +27,6 @@ input_number:
     ; Выравниваем стек
     push rbp
     mov rbp, rsp
-    sub rsp, 16
 
     mov rax, 1
     mov rdi, 1
