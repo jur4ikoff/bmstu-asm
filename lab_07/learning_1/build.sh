@@ -14,4 +14,4 @@
 # gcc "$OUT"/*.o -o app.exe
 
 # sudo apt-get install gcc-multilib g++-multilib
-g++ -m32 -masm=intel -std=c++11 -Wall -O0 -o app main.cpp
+g++ -m32 -masm=intel -std=c++11 -Wall -O0 -o app.exe main.cpp
