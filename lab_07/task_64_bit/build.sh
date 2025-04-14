@@ -15,5 +15,6 @@
 
 # sudo apt-get install gcc-multilib g++-multilib
 
-nasm -f elf32 my_strcpy.asm -o my_strcpy.o
-g++ -m32 -masm=intel -std=c++11 -Wall -O0 main.cpp my_strcpy.o -o app.exe
+nasm -f elf64 my_strcpy.asm -o my_strcpy.o
+g++ -masm=intel -std=c++11 -Wall -O0 main.cpp my_strcpy.o -o app.exe
+
