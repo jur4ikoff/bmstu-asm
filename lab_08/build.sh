@@ -13,17 +13,14 @@ mkdir $OUT 2> /dev/null
 # done
 
 
-for file in *.cpp; do
-    base=$(basename -s .cpp "$file")
-    g++ -masm=intel -std=c++11 -Wall -O0 "$file" -o "$OUT"/"$base".o
+# for file in *.cpp; do
+#     base=$(basename -s .cpp "$file")
+#     # g++ -masm=intel -std=c++11 -Wall -O0 "$file" -c -o "$OUT"/"$base".o
+#     # g++ -Wall -O0 "$file" -c -o "$OUT"/"$base".o
 
-done 
+# done 
+nasm -f elf64 -o main.o main.asm
+# gcc main.o -L/usr/lib/x86_64-linux-gnu $(pkg-config --libsgtk+-3.0) -o main -no-pie
+gcc main.o -o app.exe $(pkg-config --libs gtk+-3.0) -no-pie -fPIC
 
 # gcc "$OUT"/*.o -o app.exe
-
-
-
-# nasm -f elf64 my_strcpy.asm -o my_strcpy.o
-# g++ -masm=intel -std=c++11 -Wall -O0 main.cpp my_strcpy.o -o app.exe
-
-exit 0

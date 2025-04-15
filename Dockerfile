@@ -5,6 +5,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     gcc \
     g++ \
     gcc-multilib g++-multilib \
+    libgtk-3-dev \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY . .
