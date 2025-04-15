@@ -20,7 +20,8 @@ docker run -it --name asm --rm -v $(pwd):/app lab_asm
 # Мейби нужно будет docker -exec -it asm bash
 ```
 
-## Для билда юзаем ./build, либо в ручную
+## Для билда юзаем скрипт ./build
+Пример билда ассемблерного кода из первых лаб
 ```bash
 nasm -f elf64 hello.asm -o hello.o
 ld -o hello hello.o
