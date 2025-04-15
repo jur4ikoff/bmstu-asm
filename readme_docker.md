@@ -15,12 +15,21 @@ COPY . .
 ```
 
 ## Билдим image и запускаем container
-```bash
-docker build -t lab_asm .
-# docker run -it --rm -v $(pwd):/app lab_asm 
-docker run -it --name asm --rm -v $(pwd):/app lab_asm
-# Мейби нужно будет docker -exec -it asm bash
+
 ```
+docker run -it --rm \
+    --name asm \
+    -v $(pwd):/app \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -e DISPLAY=host.docker.internal:0 \
+    -v ~/.Xauthority:/root/.Xauthority:ro \
+    lab_asm \
+    /bin/bash
+```
+
+На маке пишем
+```xhost +localhost```
+Из-под докера билдим и запускаем приложуху
 
 ## Для билда юзаем скрипт ./build
 Пример билда ассемблерного кода из первых лаб
