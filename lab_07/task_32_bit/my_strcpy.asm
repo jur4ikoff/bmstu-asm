@@ -16,9 +16,9 @@ my_strcpy:
 
     ; Проверка на нулевые указатели
     test esi, esi
-    jz .exit
+    jz .exit ; jump if zero, ZF=1
     test edi, edi
-    jz .exit
+    jz .exit ; jump if zero, ZF=1
 
     ; Проверка нулевой длины
     test ecx, ecx
@@ -52,11 +52,11 @@ my_strcpy:
     jmp .exit
 
 .normal_copy:
-    cld
+    cld ; DF = 0
     rep movsb
 
 .exit:
     ; Эпилог функции
-    popa                ; Восстанавливаем регистры
+    popa                ; Восстанавливаем все регистры
     pop ebp
     ret
