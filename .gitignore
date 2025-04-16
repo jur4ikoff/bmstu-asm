@@ -4,3 +4,4 @@
 *.BRK
 *.exe
 out
+*.o
