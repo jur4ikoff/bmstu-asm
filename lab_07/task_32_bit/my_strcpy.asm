@@ -42,10 +42,8 @@ my_strcpy:
     jae .normal_copy    ; Если расстояние >= len, перекрытия нет
 
     ; Копирование с конца (при перекрытии)
-    add esi, ecx        ; Перемещаемся в конец src
-    add edi, ecx        ; Перемещаемся в конец dest
-    dec esi             ; Корректируем позиции
-    dec edi
+    lea esi, [esi + edx - 1]  ; Конец src
+    lea edi, [edi + edx - 1]  ; Конец dest
     std                 ; DF = 1 (движение назад)
     rep movsb           ; Копируем
     cld                 ; Восстанавливаем DF = 0
