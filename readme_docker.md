@@ -17,9 +17,14 @@ COPY . .
 ## Билдим image и запускаем container
 
 На маке пишем
-```xhost +localhost```
+```bash
+xhost +localhost
+```
 Из-под докера билдим и запускаем приложуху
 
+```bash
+docker build -t lab_asm .
+```
 
 ```
 docker run -it --rm \

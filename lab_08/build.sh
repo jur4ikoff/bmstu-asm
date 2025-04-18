@@ -22,5 +22,6 @@ mkdir $OUT 2> /dev/null
 nasm -f elf64 -o main.o main.asm
 # gcc main.o -L/usr/lib/x86_64-linux-gnu $(pkg-config --libsgtk+-3.0) -o main -no-pie
 gcc main.o -o app.exe $(pkg-config --libs gtk+-3.0) -no-pie -fPIC
+# gcc main.o -o app.exe -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -no-pie
 
 # gcc "$OUT"/*.o -o app.exe
