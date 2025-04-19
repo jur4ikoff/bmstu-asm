@@ -15,11 +15,11 @@ extern g_print
 extern exit
 
 section .data
-    window_title db "GTK Кнопка", 0
-    button_label db "Нажми меня!", 0
+    window_title db "ЛР8 Попов Ю.А.", 0
+    button_label db "Решить задачу!", 0
     signal_destroy db "destroy", 0
     signal_clicked db "clicked", 0
-    click_message db "Кнопка была нажата!", 10, 0
+    click_message db "test!", 10, 0
 
 section .text
 
@@ -47,6 +47,9 @@ main:
     mov   rsi, window_title
     call  gtk_window_set_title
     
+    ; Создание input_label
+    ; mov rdi, 
+    
     ; Создание кнопки
     mov   rdi, button_label
     call  gtk_button_new_with_label
@@ -70,9 +73,9 @@ main:
     mov   rdi, r13        ; указатель на кнопку
     mov   rsi, signal_clicked ; имя сигнала "clicked"
     mov   rdx, button_clicked ; наш обработчик
-    xor   rcx, rcx        ; данные для обработчика
-    xor   r8, r8          ; уведомитель
-    xor   r9, r9          ; флаги
+    mov   rcx, 0       ; данные для обработчика
+    mov   r8, 0          ; уведомитель
+    mov   r9, 0          ; флаги
     call  g_signal_connect_data
     
     ; Показать все виджеты
