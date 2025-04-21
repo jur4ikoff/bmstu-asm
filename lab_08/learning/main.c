@@ -4,7 +4,6 @@
 #define WINDOW_TITLE "ЛР8 по МЗЯП. Попов Ю.А."
 #define LABEL_TEXT "Введитеё текст: "
 #define BUTTON_TEXT "Найти ближайшую сверху степень двойки"
-#define RESULT_TEXT "Результат"
 #define ERR_NUMBER_TEXT "Ошибка, нужно ввести безнаковое число"
 #define WIDTH 300
 #define HEIGHT 100
