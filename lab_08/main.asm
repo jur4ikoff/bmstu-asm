@@ -1,92 +1,82 @@
-; gtk_button.asm - Программа с кнопкой на GTK и ассемблере
-; Компиляция: nasm -f elf64 gtk_button.asm && gcc -no-pie gtk_button.o -o gtk_button `pkg-config --cflags --libs gtk+-3.0`
+section .note.GNU-stack noalloc noexec nowrite progbits
 
-global main
-extern gtk_init
-extern gtk_window_new
-extern gtk_window_set_title
-extern gtk_widget_show
-extern gtk_button_new_with_label
-extern gtk_container_add
-extern g_signal_connect_data
-extern gtk_main
-extern gtk_main_quit
-extern g_print
-extern exit
+section .rodata
+    fmt db "%llu", 0
+    fmt_out db "%llu", 10, 0
+    newline db 10, 0
+    
 
-section .data
-    window_title db "ЛР8 Попов Ю.А.", 0
-    button_label db "Решить задачу!", 0
-    signal_destroy db "destroy", 0
-    signal_clicked db "clicked", 0
-    click_message db "test!", 10, 0
+section .bss
+    global number
+    number resq 1
 
 section .text
-
-; Функция-обработчик нажатия кнопки
-button_clicked:
-    mov   rdi, click_message
-    xor   rsi, rsi
-    xor   rax, rax
-    call  g_print
-    ret
+    global main
+    extern printf, scanf
 
 main:
-    ; Инициализация GTK
-    xor   rdi, rdi        ; argc = 0
-    xor   rsi, rsi        ; argv = NULL
-    call  gtk_init
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16
+
+    call input_number
+
+    mov rdi, [rel number]
+    call find_greater_degree_of_two
+
+    call print_number
+
+    mov rsp, rbp
+    pop rbp
+
+    mov rdi, 0
+    call exit
+
+
+input_number:
+    push rbp
+    mov rbp, rsp
+
+    lea rdi, [rel fmt]
+    lea rsi, [rel number]
+    mov rax, 0
+    call scanf wrt ..plt 
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+print_number:
+    push rbp
+    mov rbp, rsp
+
+    lea rdi, [rel fmt_out]
+    mov rsi, [rel number]
+    mov rax, 0
+    call printf wrt ..plt
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+
+find_greater_degree_of_two:
+    ; Число в rdi
+    push rbp
+    mov rbp, rsp
+
+    mov rcx, 0
+    mov rdx, 1
     
-    ; Создание главного окна
-    mov   rdi, 0          ; GTK_WINDOW_TOPLEVEL
-    call  gtk_window_new
-    mov   r12, rax        ; сохраняем указатель на окно
+
+
+    mov rsp, rbp
+    pop rbp
+    ret
     
-    ; Установка заголовка окна
-    mov   rdi, r12        ; указатель на окно
-    mov   rsi, window_title
-    call  gtk_window_set_title
     
-    ; Создание input_label
-    ; mov rdi, 
-    
-    ; Создание кнопки
-    mov   rdi, button_label
-    call  gtk_button_new_with_label
-    mov   r13, rax        ; сохраняем указатель на кнопку
-    
-    ; Добавление кнопки в окно
-    mov   rdi, r12        ; окно
-    mov   rsi, r13        ; кнопка
-    call  gtk_container_add
-    
-    ; Подключение сигнала "destroy" для закрытия окна
-    mov   rdi, r12        ; указатель на окно
-    mov   rsi, signal_destroy ; имя сигнала "destroy"
-    mov   rdx, gtk_main_quit ; обработчик
-    xor   rcx, rcx        ; данные для обработчика
-    xor   r8, r8          ; уведомитель
-    xor   r9, r9          ; флаги
-    call  g_signal_connect_data
-    
-    ; Подключение сигнала "clicked" для кнопки
-    mov   rdi, r13        ; указатель на кнопку
-    mov   rsi, signal_clicked ; имя сигнала "clicked"
-    mov   rdx, button_clicked ; наш обработчик
-    mov   rcx, 0       ; данные для обработчика
-    mov   r8, 0          ; уведомитель
-    mov   r9, 0          ; флаги
-    call  g_signal_connect_data
-    
-    ; Показать все виджеты
-    mov   rdi, r12
-    call  gtk_widget_show
-    mov   rdi, r13
-    call  gtk_widget_show
-    
-    ; Главный цикл GTK
-    call  gtk_main
-    
-    ; Выход
-    xor   rdi, rdi
-    call  exit
+
+exit:
+    ; rdi - exitcode
+    mov rax, 60
+    syscall

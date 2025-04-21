@@ -19,8 +19,8 @@ mkdir $OUT 2> /dev/null
 #     # g++ -Wall -O0 "$file" -c -o "$OUT"/"$base".o
 
 # done 
-# nasm -f elf64 -o main.o main.asm
-gcc main.c -c -o main.o `pkg-config --cflags --libs gtk+-3.0`
+nasm -f elf64 -o main.o main.asm
+# gcc main.c -c -o main.o `pkg-config --cflags --libs gtk+-3.0`
 # gcc main.o -L/usr/lib/x86_64-linux-gnu $(pkg-config --libsgtk+-3.0) -o main -no-pie
 gcc main.o -o app.exe $(pkg-config --libs gtk+-3.0) -no-pie -fPIC
 
