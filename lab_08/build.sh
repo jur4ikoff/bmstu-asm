@@ -9,7 +9,7 @@ mkdir $OUT 2>/dev/null
 for file in *.asm; do
     base=$(basename -s .asm "$file")
     # gcc --std=c99 -O0 -masm=intel -m32 main.c -o main
-    nasm -f elf64 -o "$OUT/$base".o "$base".asm
+    nasm -g -f elf64 -o "$OUT/$base".o "$base".asm
 done
 
 # for file in *.cpp; do
@@ -19,6 +19,8 @@ done
 
 # done
 # gcc -S main.c $(pkg-config --cflags --libs gtk+-3.0)
+
+# gcc main.o -o main.c $(pkg-config --cflags --libs gtk+-3.0)
 
 gcc "$OUT"/*.o -o app.exe $(pkg-config --libs gtk+-3.0) -no-pie -fPIC
 

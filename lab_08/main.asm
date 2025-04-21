@@ -7,7 +7,7 @@ section .data
     button_text db "Print Text", 0
     
     ; Формат для printf
-    printf_format db "Text entered: %s", 10, 0
+    printf_format db "number: %hhu", 10, 0
     
     ; Имена сигналов GTK
     signal_destroy db "destroy", 0
@@ -19,7 +19,7 @@ section .data
     type         dd 0        ; Тип сообщения (GTK_MESSAGE_INFO, GTK_MESSAGE_WARNING и т.д.)
     buttons      dd 1        ; Кнопки (GTK_BUTTONS_OK, GTK_BUTTONS_YES_NO и т.д.)
     title        db "Пример диалога", 0
-    message      db "Привет, это GTK MessageBox!", 0
+    
     signal_name     db "response", 0  ; Сигнал, который ловим (нажатие кнопки)
         ; Константы GTK
     GTK_WINDOW_TOPLEVEL dq 0
@@ -36,8 +36,11 @@ section .bss
     label resq 1
     entry resq 1
 
+    number resq 1
+
 section .rodata
-    response_signal db "response",0
+    message      db "Привет, это GTK MessageBox!", 0
+    err_number_msg db "Ошибка, нужно ввести беззнаковое число", 10, 0
 
 section .text
     ; Объявления функций GTK
@@ -56,37 +59,102 @@ section .text
     extern gtk_main
     extern gtk_main_quit
     extern gtk_entry_get_text, gtk_message_dialog_new, gtk_widget_destroy   
-    extern printf
-    extern gtk_window_get_type, g_type_check_instance_cast
+    extern printf, strtoll
+    extern gtk_window_get_type, g_type_check_instance_cast, gtk_widget_destroyed
 
     global main
 
+find_greater_degree_of_two:
+    ; Число в rdi
+    ; ret в rax
+    push rbp
+    mov rbp, rsp
+
+    mov rcx, 0
+    mov rdx, 1
+
+    cmp rdx, rdi
+    jge find_exit
+find_loop:
+    inc rcx
+    shl rdx, 1
+    cmp rdx, rdi
+    jl find_loop
+
+    mov rax, rcx
+find_exit:
+    mov rsp, rbp
+    pop rbp
+    ret
+    
+
 ; Обработчик сигнала (вызывается при нажатии кнопки)
-on_response:
+on_dialog_response:
     push rbp
     mov rbp, rsp
 
     ; rdi - диалоговое окно (автоматически передается)
-    
-    ; Просто закрываем диалог
     call gtk_widget_destroy
 
-    leave
+    mov rsp, rbp
+    pop rbp
     ret
+
+; create_dialog:
+;     ; rdi - window title
+;     ; rsi - window text
+;     ; rdx - type
+
+;     push rbp
+;     mov rbp, rsp 
+;     sub rsp, 16
+
+
+;     mov rsp, rbp
+;     pop rbp
+
+err_number:
+    lea rdi, [rel err_number_msg]
+    xor eax, eax
+    call printf wrt ..plt
+
+    ;mov rdi, [window]
+    ;call gtk_widget_destroy
+
+    mov rdi, 1
+    call exit
+
 ; Функция обратного вызова для кнопки
 on_button_clicked:
     push rbp
     mov rbp, rsp
+    sub rsp, 32
     
     ; Первый аргумент (rdi) - это кнопка, второй (rsi) - user_data (наш entry)
     mov rdi, rsi          ; Получаем entry из user_data
     call gtk_entry_get_text
     
+    mov qword [rbp-8], 0 ; end = NULL
+    ; long long number = strtoll(text, &end, 10);
+    mov rdi, rax
+    lea rsi, [rbp - 8]
+    mov rdx, 10
+    call strtoll
+
+    mov [number], rax
+
+    mov rdi, rax 
     ; Выводим текст в консоль
     mov rdi, printf_format
-    mov rsi, rax
+    mov rsi, [number]
     xor eax, eax
     call printf
+
+    ; Проверки
+    ; Проверяем *end != 0 
+    mov rcx , [rbp - 8]
+    cmp byte [rcx], 0
+    jne err_number
 
     ; Создаем диалог
     mov rdi, [parent_window]    ; Родительское окно (NULL)
@@ -97,20 +165,23 @@ on_button_clicked:
     mov r9, message             ; Текст сообщения
     call gtk_message_dialog_new
     
+    mov [rbp - 16], rax
 
     ; Подключаем обработчик сигнала "response" (нажатие кнопки)
     mov rdi, rax                ; Диалог (GtkDialog*)
-    mov rsi, signal_name        ; "response" (сигнал)
-    lea rdx, [rel on_response] ; Обработчик
+    lea rsi, [rel signal_name]        ; "response" (сигнал)
+    lea rdx, [rel on_dialog_response] ; Обработчик
     xor rcx, rcx                ; user_data (NULL)
     xor r8, r8                  ; Уведомитель (NULL)
     xor r9, r9                  ; Флаги (0)
     call g_signal_connect_data
 
+    mov rax, [rbp - 16]
     ; Показываем диалог
     mov rdi, rax
     call gtk_widget_show
 
+    mov rsp, rbp
     pop rbp
     ret
 
@@ -139,15 +210,15 @@ main:
     mov rdx, height
     call gtk_window_set_default_size
     
-    ; Сигнал destroy
-    mov rdi, [window]
-    lea rsi, [signal_destroy]
-    mov rdx, gtk_main_quit
+        ; Подключение сигнала "destroy" для закрытия окна
+    mov   rdi, [rel window]        ; указатель на окно
+    lea   rsi, [rel signal_destroy] ; имя сигнала "destroy"
+    mov   rdx, gtk_main_quit ; обработчик
     xor rcx, rcx
-    xor r8, r8
-    xor r9, r9
-    call g_signal_connect_data
-    
+    xor   r8, r8          ; уведомитель
+    xor   r9, r9          ; флаги
+    call  g_signal_connect_data
+
     ; Создание сетки
     call gtk_grid_new
     mov [grid], rax
@@ -198,6 +269,7 @@ main:
     mov r9, 1
     call gtk_grid_attach
     
+
     ; Подключение сигнала clicked с передачей entry как user_data
     mov rdi, [button]
     lea rsi, [signal_clicked]
@@ -216,5 +288,13 @@ main:
     
     ; Выход
     xor eax, eax
-    leave
-    ret
+
+
+    mov rsp, rbp
+    pop rbp
+    mov rdi, 0
+
+exit:
+    ; rdi - exitcode
+    mov rax, 60
+    syscall
