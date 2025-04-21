@@ -118,7 +118,7 @@ create_dialog:
     mov rdi, 0   ; Родительское окно (NULL)
     call gtk_message_dialog_new
     
-    ;mov [rbp - 8], rax
+    ; mov [rbp - 8], rax
 
     ; ; Подключаем обработчик сигнала "response" (нажатие кнопки)
     ; mov rdi, rax                ; Диалог (GtkDialog*)
@@ -174,18 +174,18 @@ on_button_clicked:
 
     mov [number], rax
 
-    lea rdi, [rel err_number_msg]        
-    mov rsi, 3
-    call create_dialog
+    ; lea rdi, [rel err_number_msg]        
+    ; mov rsi, 3
+    ; call create_dialog
 
     ; Проверки
     ; Проверяем *end != 0 
-    ; mov rcx, [rbp - 8]
-    ; cmp byte [rcx], 0
-    ; jne err_number
-    ; ; Проверяем number < 0
-    ; cmp qword [number], 0
-    ; jl err_number
+    mov rcx, [rbp - 8]
+    cmp byte [rcx], 0
+    jne err_number
+    ; Проверяем number < 0
+    cmp qword [number], 0
+    jl err_number
 
 
 on_button_clicked_end:
