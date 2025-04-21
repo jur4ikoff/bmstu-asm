@@ -9,7 +9,11 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     gcc \
     g++ \
     gcc-multilib g++-multilib \
+    x11-xserver-utils \
+    libgtk-3-dev \
+    --no-install-recommends  \
     && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY . .
 ```

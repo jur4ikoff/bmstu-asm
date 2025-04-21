@@ -12,5 +12,3 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
 
 WORKDIR /app
 COPY . .
-
-    # libgtk-3-dev \
