@@ -7,23 +7,10 @@
 #define RESULT_TEXT "Результат"
 #define ERR_NUMBER_TEXT "Ошибка, нужно ввести безнаковое число"
 #define WIDTH 300
-#define HEIGHT 150
+#define HEIGHT 100
 
 #define ERR_OK 0
 #define ERR_NUMBER 1
-
-/*
-int pow = find_nearest_power(num);
-        GtkWidget *msg_dialog = gtk_message_dialog_new(
-            NULL,
-            GTK_DIALOG_MODAL,
-            GTK_MESSAGE_INFO,
-            GTK_BUTTONS_OK,
-            "Ближайшая степень двойки ≥ %lld:\n2^%d = %lld", num, pow, (1LL << pow));
-        gtk_window_set_title(GTK_WINDOW(msg_dialog), "Результат");
-        g_signal_connect(msg_dialog, "response", G_CALLBACK(on_dialog_response), NULL);
-        gtk_widget_show_all(msg_dialog);
-*/
 
 static void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer user_data)
 {
@@ -47,6 +34,7 @@ static void on_button_clicked(GtkWidget *widget, gpointer data)
 {
     GtkWidget *entry = (GtkWidget *)data;
     GtkWidget *label = g_object_get_data(G_OBJECT(entry), "label");
+    GtkWidget *msg_dialog;
 
     const char *text = gtk_entry_get_text(GTK_ENTRY(entry));
 
@@ -55,15 +43,21 @@ static void on_button_clicked(GtkWidget *widget, gpointer data)
 
     if (*end != 0 || number < 0)
     {
-        GtkWidget *msg_dialog = gtk_message_dialog_new(
-            NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, ERR_NUMBER_TEXT);
+        msg_dialog = gtk_message_dialog_new(
+            NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK, ERR_NUMBER_TEXT);
         gtk_window_set_title(GTK_WINDOW(msg_dialog), "Ошибка");
         g_signal_connect(msg_dialog, "response", G_CALLBACK(on_dialog_response), NULL);
         gtk_widget_show_all(msg_dialog);
     }
-
-    int degree = find_upper_degree_of_two(number);
-    printf("%d\n", degree);
+    else
+    {
+        int degree = find_upper_degree_of_two(number);
+        msg_dialog = gtk_message_dialog_new(
+            NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, "Ближайшая степень двойки %d : 2^%d = %lld", degree, degree, (1LL << degree));
+        gtk_window_set_title(GTK_WINDOW(msg_dialog), "Результат");
+        g_signal_connect(msg_dialog, "response", G_CALLBACK(on_dialog_response), NULL);
+        gtk_widget_show_all(msg_dialog);
+    }
 }
 
 int main(int argc, char **argv)
