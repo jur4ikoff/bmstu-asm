@@ -1,7 +1,7 @@
 section .data
     ; Константы
     window_title db "GTK Assembly App", 0
-    message_fmt db "Ближайшая степень двойки %d : 2^%d = %lld", 0
+    message_fmt db "Ближайшая степень двойки %lld : 2^%lld = %lld", 0
     res_window_title db "Результат", 0
     width equ 400
     height equ 200
@@ -147,7 +147,7 @@ create_result_dialog:
     sub rsp, 32      ; Выравнивание стека + место для аргументов
 
     ; Сохраняем входные параметры
-    mov [rbp-4], edi   ; Сохраняем degree
+    mov [rbp-8], edi   ; Сохраняем degree
     mov [rbp-16], rsi  ; Сохраняем (1LL << degree)
 
     ; Создаем диалоговое окно
@@ -156,8 +156,8 @@ create_result_dialog:
     mov edx, 0                     ; GTK_MESSAGE_INFO
     mov ecx, 2                     ; GTK_BUTTONS_OK
     lea r8, [rel message_fmt]      ; Форматная строка
-    mov r9d, [rbp-4]               ; degree (первый %d)
-    mov eax, [rbp-4]                ; degree (второй %d)
+    mov r9d, [rbp-8]               ; degree (первый %d)
+    mov eax, [rbp-8]                ; degree (второй %d)
     mov rdx, [rbp-16]               ; (1LL << degree) (%lld)
 
     ; Помещаем дополнительные аргументы в стек
@@ -274,26 +274,14 @@ on_button_clicked:
 
     mov rdi, [rel number]
     call find_greater_degree_of_two
-    mov [rel degree], rax
-    
-
-    lea rdi, [rel printf_format]
-    mov rsi, [rel degree]
-    mov rsi, rax
-    xor rax, rax
-    call printf wrt ..plt
-    
+    mov [rel degree], rax    
 
     mov rdi, [rel degree]
     call pow_2
     
-    lea rdi, [rel printf_format]
+    mov rdi, [rel degree]
     mov rsi, rax
-    xor rax, rax
-    call printf wrt ..plt
-
-    
-    ; call create_result_dialog
+    call create_result_dialog
 
 
 
