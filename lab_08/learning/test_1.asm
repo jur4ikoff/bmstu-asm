@@ -62,7 +62,7 @@ find_upper_degree_of_two:
     ret
 
 ; Обработчик ответа диалога
-on_dialog_response:
+dialog_destroy:
     push rbp
     mov rbp, rsp
     
@@ -134,7 +134,7 @@ on_button_clicked:
     
     ; Подключаем обработчик ответа
     mov rdi, [rbp-56]
-    lea rsi, [on_dialog_response]
+    lea rsi, [dialog_destroy]
     xor rdx, rdx       ; data
     xor rcx, rcx       ; destroy_data
     xor r8, r8         ; connect_flags
@@ -163,7 +163,7 @@ on_button_clicked:
     
     ; Подключаем обработчик ответа
     mov rdi, [rbp-56]
-    lea rsi, [on_dialog_response]
+    lea rsi, [dialog_destroy]
     xor rdx, rdx       ; data
     xor rcx, rcx       ; destroy_data
     xor r8, r8         ; connect_flags

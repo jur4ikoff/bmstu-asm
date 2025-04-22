@@ -1,7 +1,7 @@
 	.file	"main.c"
 	.text
-	.type	on_dialog_response, @function
-on_dialog_response:
+	.type	dialog_destroy, @function
+dialog_destroy:
 .LFB2401:
 	.cfi_startproc
 	endbr64
@@ -28,7 +28,7 @@ on_dialog_response:
 	ret
 	.cfi_endproc
 .LFE2401:
-	.size	on_dialog_response, .-on_dialog_response
+	.size	dialog_destroy, .-dialog_destroy
 	.globl	find_upper_degree_of_two
 	.type	find_upper_degree_of_two, @function
 find_upper_degree_of_two:
@@ -150,7 +150,7 @@ on_button_clicked:
 	movl	$0, %r9d
 	movl	$0, %r8d
 	movl	$0, %ecx
-	leaq	on_dialog_response(%rip), %rdx
+	leaq	dialog_destroy(%rip), %rdx
 	leaq	.LC3(%rip), %rsi
 	movq	%rax, %rdi
 	call	g_signal_connect_data@PLT
@@ -197,7 +197,7 @@ on_button_clicked:
 	movl	$0, %r9d
 	movl	$0, %r8d
 	movl	$0, %ecx
-	leaq	on_dialog_response(%rip), %rdx
+	leaq	dialog_destroy(%rip), %rdx
 	leaq	.LC3(%rip), %rsi
 	movq	%rax, %rdi
 	call	g_signal_connect_data@PLT
