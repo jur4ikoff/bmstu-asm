@@ -101,35 +101,35 @@ on_dialog_response:
     ret
 
 create_dialog:
-    ; rdi - window title
+    ; rdi - text
     ; rsi - type
 
     push rbp
     mov rbp, rsp 
-    sub rsp, 32
+    sub rsp, 16
 
     
     ; Создаем диалог
     xor r9, r9
-    mov r8, rdi ; title
-    mov rcx, [buttons]          ; Кнопки (GTK_BUTTONS_OK)
+    mov r8, rdi ; text
+    mov rcx, [rel buttons]          ; Кнопки (GTK_BUTTONS_OK)
     mov rdx, rsi ; Тип сообщения (GTK_MESSAGE_INFO)
     mov rsi, 0           ; Флаги (0)
     mov rdi, 0   ; Родительское окно (NULL)
     call gtk_message_dialog_new
     
-    ; mov [rbp - 8], rax
+    mov [rbp - 8], rax
 
-    ; ; Подключаем обработчик сигнала "response" (нажатие кнопки)
-    ; mov rdi, rax                ; Диалог (GtkDialog*)
-    ; lea rsi, [rel signal_name]        ; "response" (сигнал)
-    ; lea rdx, [rel on_dialog_response] ; Обработчик
-    ; xor rcx, rcx                ; user_data (NULL)
-    ; xor r8, r8                  ; Уведомитель (NULL)
-    ; xor r9, r9                  ; Флаги (0)
-    ; call g_signal_connect_data
+    ; Подключаем обработчик сигнала "response" (нажатие кнопки)
+    mov rdi, rax                ; Диалог (GtkDialog*)
+    lea rsi, [rel signal_name]        ; "response" (сигнал)
+    lea rdx, [rel on_dialog_response] ; Обработчик
+    xor rcx, rcx                ; user_data (NULL)
+    xor r8, r8                  ; Уведомитель (NULL)
+    xor r9, r9                  ; Флаги (0)
+    call g_signal_connect_data
 
-    ; mov rax, [rbp - 8]
+    mov rax, [rbp - 8]
     ; Показываем диалог
     mov rdi, rax
     call gtk_widget_show
@@ -139,20 +139,16 @@ create_dialog:
     ret
 
 err_number:
-    push rbp
-    mov rbp, rsp 
-    sub rsp, 32
-
     lea rdi, [rel err_number_msg]
     xor rax, rax
     call printf wrt ..plt
 
+
+    xor rax, rax
     lea rdi, [rel err_number_msg]        
     mov rsi, 3
     call create_dialog
 
-    mov rsp, rbp
-    pop rbp
     jmp on_button_clicked_end
 
 ; Функция обратного вызова для кнопки
