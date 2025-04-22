@@ -32,13 +32,6 @@ section .rodata
 
     WINDOW_WIDTH equ 300
     WINDOW_HEIGHT equ 100
-
-   ; Заголовки GTK
-    GTK_PARENT        dq 0       ; Указатель на родительское окно (может быть NULL)
-    GTK_DIALOG_MODAL  db 0        ; Флаги диалога (GTK_DIALOG_MODAL и т.д.)
-    GTK_MESSAGE_INFO  db 0        ; Тип сообщения (GTK_MESSAGE_INFO, GTK_MESSAGE_WARNING и т.д.)
-    GTK_MESSAGE_ERROR db 0        ; Тип сообщения (GTK_MESSAGE_INFO, GTK_MESSAGE_WARNING и т.д.)
-    GTK_BUTTONS_OK    db 1        ; Кнопки (GTK_BUTTONS_OK, GTK_BUTTONS_YES_NO и т.д.)
     
 
 
@@ -136,20 +129,19 @@ create_result_dialog:
     mov [rbp - 8], rdi   ; degree
     mov [rbp - 16], rsi  ; 2^degree
 
-
     xor rdi, rdi                ; parent = NULL
     mov esi, 0 ; flags
     mov edx, 0 ; message_type
     mov ecx, 1  ; buttons_type
-    lea r8, [message_fmt]            ; format string
-    mov r9, [rbp - 8]             ; 1-й %lld (degree)
-    push qword [rbp - 16]         ; 3-й %lld (2^degree)
-    push qword [rbp - 8]          ; 2-й %lld (degree)
+    lea r8, [message_fmt] ; format string
+    mov r9, [rbp - 8]     ; 1-й %lld (degree)
+    push qword [rbp - 16] ; 3-й %lld (2^degree)
+    push qword [rbp - 8]  ; 2-й %lld (degree)
     call gtk_message_dialog_new
     ; gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, format, degree, degree, 2^degree)
 
-
     add rsp, 16                 ; Чистим аргументы со стека
+
     ; Сохраняем указатель на диалог (msg_dialog)
     mov [rbp - 24], rax
 
@@ -159,15 +151,15 @@ create_result_dialog:
     call gtk_window_set_title
 
     ; Подключаем обработчик: g_signal_connect(msg_dialog, "response", G_CALLBACK(on_dialog_response), NULL)
-    mov rdi, [rbp - 24]           ; msg_dialog
-    lea rsi, [rel signal_response]     ; "response"
-    lea rdx, [rel dialog_destroy] ; callback
-    xor rcx, rcx                ; user_data = NULL
+    mov rdi, [rbp - 24]            ; msg_dialog
+    lea rsi, [rel signal_response] ; "response"
+    lea rdx, [rel dialog_destroy]  ; callback
+    xor rcx, rcx                   ; user_data = NULL
     xor r8, r8
     xor r9, r9
     call g_signal_connect_data
 
-    ; Показываем диалог: gtk_widget_show_all(msg_dialog)
+    ; gtk_widget_show_all(msg_dialog)
     mov rdi, [rbp-24]
     call gtk_widget_show_all
 
@@ -186,7 +178,7 @@ create_err_dialog:
     ; Создаем диалог
     xor r9, r9
     mov r8, rdi ; text
-    mov rcx, [rel GTK_BUTTONS_OK]          ; Кнопки (GTK_BUTTONS_OK)
+    mov rcx, 1          ; Кнопки (GTK_BUTTONS_OK)
     mov rdx, rsi ; Тип сообщения (GTK_MESSAGE_INFO)
     mov rsi, 3           ; Флаги (0)
     mov rdi, 0   ; Родительское окно (NULL)
@@ -219,12 +211,7 @@ create_err_dialog:
 
 err_number:
     ; Неверное число
-
-    lea rdi, [rel err_number_msg]
-    xor rax, rax
-    call printf wrt ..plt
-
-
+    
     xor rax, rax
     lea rdi, [rel err_number_msg]        
     mov rsi, 3
