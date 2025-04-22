@@ -9,11 +9,6 @@ for file in *.cpp; do
     # nasm -f elf64 "$file" -o "$OUT"/"$base".o
 done
 
-# # nasm -f elf64 *.asm -o "$OUT"/*.o
-# gcc "$OUT"/*.o -o app.exe
-
 # sudo apt-get install gcc-multilib g++-multilib
-
-
 g++ -std=c++20 -Wall "$OUT"/*.o -o app.exe
 

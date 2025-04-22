@@ -4,7 +4,7 @@
 
 int main()
 {
-    char password[BUFFER];
+    // char password[BUFFER];
     std::cout << "test" << std::endl;
     return 0;
 }
