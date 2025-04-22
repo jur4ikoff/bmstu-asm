@@ -1,13 +1,17 @@
 section .data
     ; Константы
     window_title db "GTK Assembly App", 0
+    message_fmt db "Ближайшая степень двойки %d : 2^%d = %lld", 0
+    res_window_title db "Результат", 0
     width equ 400
     height equ 200
     label_text db "Enter text:", 0
     button_text db "Print Text", 0
+    error_title db "Ошибка", 0
     
     ; Формат для printf
-    printf_format db "number: %hhu", 10, 0
+    printf_format db "number: %llu", 10, 0
+    ; test db "%"
     
     ; Имена сигналов GTK
     signal_destroy db "destroy", 0
@@ -37,6 +41,7 @@ section .bss
     entry resq 1
 
     number resq 1
+    degree resq 1
 
 section .rodata
     message      db "Привет, это GTK MessageBox!", 0
@@ -60,7 +65,7 @@ section .text
     extern gtk_main_quit
     extern gtk_entry_get_text, gtk_message_dialog_new, gtk_widget_destroy   
     extern printf, strtoll
-    extern gtk_window_get_type, g_type_check_instance_cast, gtk_widget_destroyed
+    extern gtk_window_get_type, g_type_check_instance_cast, gtk_widget_destroyed, pow
 
     global main
 
@@ -86,7 +91,38 @@ find_exit:
     mov rsp, rbp
     pop rbp
     ret
+
+pow_2:
+    ; rdi - degree (must be < 64)
+    ; return in rax
     
+    ; пролог
+    push rbp
+    mov rbp, rsp
+
+    cmp rdi, 63
+    ja .overflow
+
+    mov rcx, rdi
+    mov rax, 1
+    jrcxz .done       ; если rcx == 0, пропустить цикл
+.pow_loop:
+    shl rax, 1
+
+    dec rcx
+    cmp rcx, 0
+    jg .pow_loop
+
+.done:
+    ; эпилог
+    mov rsp, rbp
+    pop rbp    
+    ret
+.overflow:
+    xor rax, rax
+    mov rsp, rbp
+    pop rbp
+    ret
 
 ; Обработчик сигнала (вызывается при нажатии кнопки)
 on_dialog_response:
@@ -100,7 +136,60 @@ on_dialog_response:
     pop rbp
     ret
 
-create_dialog:
+create_result_dialog:
+    ; Функция создает диалоговое окно с результатом
+    ; Входные параметры:
+    ;   rdi - degree (степень)
+    ;   rsi - 1LL << degree (результат)
+
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32      ; Выравнивание стека + место для аргументов
+
+    ; Сохраняем входные параметры
+    mov [rbp-4], edi   ; Сохраняем degree
+    mov [rbp-16], rsi  ; Сохраняем (1LL << degree)
+
+    ; Создаем диалоговое окно
+    xor rdi, rdi                   ; parent = NULL
+    mov esi, 1                     ; GTK_DIALOG_MODAL
+    mov edx, 0                     ; GTK_MESSAGE_INFO
+    mov ecx, 2                     ; GTK_BUTTONS_OK
+    lea r8, [rel message_fmt]      ; Форматная строка
+    mov r9d, [rbp-4]               ; degree (первый %d)
+    mov eax, [rbp-4]                ; degree (второй %d)
+    mov rdx, [rbp-16]               ; (1LL << degree) (%lld)
+
+    ; Помещаем дополнительные аргументы в стек
+    push rdx                       ; 6-й аргумент
+    push rax                       ; 5-й аргумент
+    push r9                        ; 4-й аргумент
+    call gtk_message_dialog_new
+    add rsp, 24                    ; Очищаем стек от аргументов
+    mov [rbp-24], rax              ; Сохраняем указатель на диалог
+
+    ; Устанавливаем заголовок окна
+    mov rdi, [rbp-24]              ; Указатель на диалог
+    lea rsi, [rel res_window_title]    ; Заголовок окна
+    call gtk_window_set_title
+
+    ; Подключаем обработчик сигнала
+    mov rdi, [rbp-24]              ; Указатель на диалог
+    lea rsi, [rel signal_name]    ; Имя сигнала "response"
+    lea rdx, [rel on_dialog_response] ; Функция-обработчик
+    xor rcx, rcx                   ; user_data = NULL
+    xor r8, r8                     ; notify = NULL
+    xor r9, r9                     ; GConnectFlags = 0
+    call g_signal_connect_data
+
+    ; Показываем диалог
+    mov rdi, [rbp-24]
+    call gtk_widget_show_all
+
+    leave
+    ret
+
+create_err_dialog:
     ; rdi - text
     ; rsi - type
 
@@ -114,14 +203,18 @@ create_dialog:
     mov r8, rdi ; text
     mov rcx, [rel buttons]          ; Кнопки (GTK_BUTTONS_OK)
     mov rdx, rsi ; Тип сообщения (GTK_MESSAGE_INFO)
-    mov rsi, 0           ; Флаги (0)
+    mov rsi, 3           ; Флаги (0)
     mov rdi, 0   ; Родительское окно (NULL)
     call gtk_message_dialog_new
     
     mov [rbp - 8], rax
 
+    mov rdi, rax
+    lea rsi, [rel error_title]
+    call gtk_window_set_title
+
     ; Подключаем обработчик сигнала "response" (нажатие кнопки)
-    mov rdi, rax                ; Диалог (GtkDialog*)
+    mov rdi, [rbp - 8]                ; Диалог (GtkDialog*)
     lea rsi, [rel signal_name]        ; "response" (сигнал)
     lea rdx, [rel on_dialog_response] ; Обработчик
     xor rcx, rcx                ; user_data (NULL)
@@ -147,7 +240,7 @@ err_number:
     xor rax, rax
     lea rdi, [rel err_number_msg]        
     mov rsi, 3
-    call create_dialog
+    call create_err_dialog
 
     jmp on_button_clicked_end
 
@@ -170,10 +263,6 @@ on_button_clicked:
 
     mov [number], rax
 
-    ; lea rdi, [rel err_number_msg]        
-    ; mov rsi, 3
-    ; call create_dialog
-
     ; Проверки
     ; Проверяем *end != 0 
     mov rcx, [rbp - 8]
@@ -182,6 +271,33 @@ on_button_clicked:
     ; Проверяем number < 0
     cmp qword [number], 0
     jl err_number
+
+    mov rdi, [rel number]
+    call find_greater_degree_of_two
+    mov [rel degree], rax
+    
+
+    lea rdi, [rel printf_format]
+    mov rsi, [rel degree]
+    mov rsi, rax
+    xor rax, rax
+    call printf wrt ..plt
+    
+
+    mov rdi, [rel degree]
+    call pow_2
+    
+    lea rdi, [rel printf_format]
+    mov rsi, rax
+    xor rax, rax
+    call printf wrt ..plt
+
+    
+    ; call create_result_dialog
+
+
+
+
 
 
 on_button_clicked_end:
