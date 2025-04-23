@@ -1,5 +1,6 @@
 {
     "files.associations": {
+<<<<<<< HEAD
         "iostream": "cpp",
         "ostream": "cpp",
         "array": "cpp",
@@ -45,5 +46,10 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "typeinfo": "cpp"
+=======
+        "array": "c",
+        "string": "c",
+        "string_view": "c"
+>>>>>>> lab_08
     }
 }
