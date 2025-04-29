@@ -3,6 +3,27 @@
 
 #define MAX_ITTERATIONS 10000000
 
+// Загружаем первое число в стек FPU (ST(0))
+// Прибавляем второе число к ST(0)
+// Сохраняем результат из ST(0) в res и выталкиваем из стека
+#define ASM_ADD(result, a, b) \
+    asm volatile(             \
+        "fld %1\n"            \
+        "fadd %2\n"           \
+        "fstp %0\n"           \
+        : "=m"(result)        \
+        : "m"(a), "m"(b)      \
+        : "st");
+
+#define ASM_MUL(result, a, b) \
+    asm volatile(             \
+        "fld %1\n"            \
+        "fmul %2\n"           \
+        "fstp %0\n"           \
+        : "=m"(result)        \
+        : "m"(a), "m"(b)      \
+        : "st");
+
 void test_float_operations(void)
 {
     float a = 1.234567f, b = 7.890123f, res;
@@ -11,24 +32,8 @@ void test_float_operations(void)
 
     for (int i = 0; i < MAX_ITTERATIONS; i++)
     {
-        // Сложение
-        asm volatile(
-            "fld %1\n\t"     // Загружаем первое число в стек FPU (ST(0))
-            "fadd %2\n\t"    // Прибавляем второе число к ST(0)
-            "fstp %0\n\t"    // Сохраняем результат из ST(0) в res и выталкиваем из стека
-            : "=m"(res)      // Выходной операнд - в память
-            : "m"(a), "m"(b) // Входные операнды - из памяти
-            : "st"           // Указываем, что используем регистр ST(0)
-        );
-
-        // Умножение
-        asm volatile(
-            "fld %1\n"
-            "fmul %2\n"
-            "fstp %0\n"
-            : "=m"(res)
-            : "m"(a), "m"(b)
-            : "st");
+        ASM_ADD(res, a, b)
+        ASM_MUL(res, a, b)
     }
     clock_t end = clock();
     double time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
@@ -43,25 +48,10 @@ void test_double_operations(void)
 
     for (int i = 0; i < MAX_ITTERATIONS; i++)
     {
-        // Сложение
-        asm volatile(
-            "fld %1\n\t"     // Загружаем первое число в стек FPU (ST(0))
-            "fadd %2\n\t"    // Прибавляем второе число к ST(0)
-            "fstp %0\n\t"    // Сохраняем результат из ST(0) в res и выталкиваем из стека
-            : "=m"(res)      // Выходной операнд - в память
-            : "m"(a), "m"(b) // Входные операнды - из памяти
-            : "st"           // Указываем, что используем регистр ST(0)
-        );
-
-        // Умножение
-        asm volatile(
-            "fld %1\n"
-            "fmul %2\n"
-            "fstp %0\n"
-            : "=m"(res)
-            : "m"(a), "m"(b)
-            : "st");
+        ASM_ADD(res, a, b)
+        ASM_MUL(res, a, b)
     }
+
     clock_t end = clock();
     double time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
     printf("Время double операций: %.6f секунд, Количество иттераций %d\n", time_used, MAX_ITTERATIONS);
