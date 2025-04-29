@@ -44,8 +44,27 @@ void test_double_operations(void)
     printf("Время Double операций с сопроцессором 80387: %.6f секунд, Количество иттераций %d\n", time_used, MAX_ITTERATIONS);
 }
 
+void test_long_double_operations(void)
+{
+    // long double 80 byte
+    long double a = 1.23456742235454224423423223424233, b = 7.89012325454252452445245244, c;
+
+    clock_t start = clock();
+
+    for (int i = 0; i < MAX_ITTERATIONS; i++)
+    {
+        c = a + b;
+        c = a * b;
+    }
+
+    clock_t end = clock();
+    double time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    printf("Время long double операций с сопроцессором 80387: %.6f секунд, Количество иттераций %d\n", time_used, MAX_ITTERATIONS);
+}
+
 int main(void)
 {
     test_float_operations();
     test_double_operations();
+    test_long_double_operations();
 }
