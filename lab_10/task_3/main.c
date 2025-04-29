@@ -1,9 +1,11 @@
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 
 #define ERR_OK 0
 #define ERR_INPUT 1
 #define ERR_NO_ROOT 2
+
+// static double seven asm("seven") = 7;
 
 // Функция для которой ищем корень: cos(x^3 + 7)
 double f(double x)
@@ -24,24 +26,10 @@ double f_asm(double x)
         "fld %1\n"  // st(0) = x, st(1) = x*x
         "fmulp\n"   // st(0) = x^3
         "fadd %2\n" // st(0) = x^3 + 7.0
-        // "fld1\n"    // st(0) = 1.0, st(1) = x^3
-        // "faddp\n"   // st(0) = 1.0 + x^3
-        // "fld1\n"    // st(0) = 1.0, st(1) = 1.0 + x^3
-        // "faddp\n"   // st(0) = 2.0 + x^3
-        // "fld1\n"    // st(0) = 1.0, st(1) = 2.0 + x^3
-        // "faddp\n"   // st(0) = 3.0 + x^3
-        // "fld1\n"    // st(0) = 1.0, st(1) = 3.0 + x^3
-        // "faddp\n"   // st(0) = 4.0 + x^3
-        // "fld1\n"    // st(0) = 1.0, st(1) = 4.0 + x^3
-        // "faddp\n"   // st(0) = 5.0 + x^3
-        // "fld1\n"    // st(0) = 1.0, st(1) = 5.0 + x^3
-        // "faddp\n"   // st(0) = 6.0 + x^3
-        // "fld1\n"    // st(0) = 1.0, st(1) = 6.0 + x^3
-        // "faddp\n"   // st(0) = 7.0 + x^3
         "fcos\n"    // st(0) = cos(7.0 + x^3)
         "fstp %0\n" // Сохраняем результат и выталкиваем из стека
         : "=m"(result)
-        : "m"(x), "m" (result));
+        : "m"(x), "m"(inc));
     return result;
 }
 
@@ -99,10 +87,10 @@ void error_handler(int rc)
 {
     switch (rc)
     {
-    case ERR_INPUT:
-        printf("Ошибка ввода\n");
-    case ERR_NO_ROOT:
-        printf("На данном интервале либо нет корней, либо их четное количество.\n");
+        case ERR_INPUT:
+            printf("Ошибка ввода\n");
+        case ERR_NO_ROOT:
+            printf("На данном интервале либо нет корней, либо их четное количество.\n");
     }
 }
 
