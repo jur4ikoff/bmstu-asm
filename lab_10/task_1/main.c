@@ -1,7 +1,14 @@
 #include <stdio.h>
 #include <time.h>
 
-#define MAX_ITTERATIONS 1000000
+#define MAX_ITTERATIONS 10000000
+
+void get_time(double *result)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    *result = (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
+}
 
 void test_float_operations(void)
 {
@@ -17,7 +24,7 @@ void test_float_operations(void)
 
     clock_t end = clock();
     double time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    printf("Время Float операций с сопроцессором 80387: %.6f секунд, Количество иттерация %d\n", time_used, MAX_ITTERATIONS);
+    printf("Время Double операций с сопроцессором 80387: %.6f секунд, Количество иттераций %d\n", time_used, MAX_ITTERATIONS);
 }
 
 void test_double_operations(void)
@@ -34,7 +41,7 @@ void test_double_operations(void)
 
     clock_t end = clock();
     double time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    printf("Время Float операций с сопроцессором 80387: %.6f секунд, Количество иттерация %d\n", time_used, MAX_ITTERATIONS);
+    printf("Время Double операций с сопроцессором 80387: %.6f секунд, Количество иттераций %d\n", time_used, MAX_ITTERATIONS);
 }
 
 int main(void)
