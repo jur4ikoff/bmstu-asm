@@ -1,3 +1,4 @@
 #!/bin/bash
 
-gcc -mno-80387 -O0 -o app_no_coprocessor_test.exe main.c
+gcc -O0 -masm=intel -o app_asm_insertion.exe insert_asm.c
+# -mfpmath=387 — заставляет GCC использовать x87 для float/double. 
