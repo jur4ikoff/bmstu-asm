@@ -5,57 +5,51 @@
 
 
 ### Дизассемблированный код без сопроцессора
-Код сложения и умножения float без сопроцессора
+Код сложения и умножения float без сопроцессора 80387
 ```asm
-movss   xmm0, [rbp+var_24]
-addss   xmm0, [rbp+var_20] ; c = a + b
+; movss Копирует 32-битное float (Scalar Single-Precision) из памяти в регистр XMM или наоборот
+; addss	Сложение двух float (xmm0 = xmm0 + [mem])
+movss   xmm0, [rbp+var_24]  ; Загружаем float из var_24 в регистр xmm0
+addss   xmm0, [rbp+var_20]  ; Прибавляем float из var_20 к xmm0
 movss   [rbp+var_1C], xmm0
 movss   xmm0, [rbp+var_24]
-mulss   xmm0, [rbp+var_20] ; c = a * b
+mulss   xmm0, [rbp+var_20]
 movss   [rbp+var_1C], xmm0
-add     [rbp+var_28], 1 ; i++
-```
-Код сложения и умножения double без сопроцессора
-```asm
-movsd   xmm0, [rbp+var_30] ; 30h - 28h = 8h
-addsd   xmm0, [rbp+var_28]  ; c = a + b
-movsd   [rbp+var_8], xmm0
-movsd   xmm0, [rbp+var_30]
-mulsd   xmm0, [rbp+var_28] ; c = a * b
-movsd   [rbp+var_8], xmm0 ; 
-add     [rbp+var_34], 1
+add     [rbp+var_28], 1     ; i++
 ```
 
 ### Дизассемблированный с сопроцессором
-Float operations  
+Код сложения и умножения float без сопроцессора 80387
 ```asm
-.text:00000000000011A1                 movss   xmm0, [rbp+var_24]
-.text:00000000000011A6                 addss   xmm0, [rbp+var_20]
-.text:00000000000011AB                 movss   [rbp+var_1C], xmm0
-.text:00000000000011B0                 movss   xmm0, [rbp+var_24]
-.text:00000000000011B5                 mulss   xmm0, [rbp+var_20]
-.text:00000000000011BA                 movss   [rbp+var_1C], xmm0
-```
-Double operations  
-```asm
-.text:0000000000001254                 movsd   xmm0, [rbp+var_30]
-.text:0000000000001259                 addsd   xmm0, [rbp+var_28]
-.text:000000000000125E                 movsd   [rbp+var_8], xmm0
-.text:0000000000001263                 movsd   xmm0, [rbp+var_30]
-.text:0000000000001268                 mulsd   xmm0, [rbp+var_28]
-.text:000000000000126D                 movsd   [rbp+var_8], xmm0
+; fld	Загружает число из памяти в стек FPU (ST0)
+; fadd	Складывает ST0 с числом из памяти
+; fmul	Умножает ST0 на число из памяти
+; fstp	Сохраняет ST0 в память и извлекает значение из стека FPU
+
+; [rbp+var_8] - a
+; [rbp+var_C] - b
+
+fld     [rbp+var_8]  ; Загружаем число из var_8 в стек FPU (ST0)
+fadd    [rbp+var_C]  ; Прибавляем число из var_C к ST0
+fstp    [rbp+var_2C] ; Сохраняем результат (ST0) в var_2C и извлекаем из стека FPU
+fld     [rbp+var_8]
+fmul    [rbp+var_C]
+fstp    [rbp+var_2C]
+add     [rbp+var_4], 1 
 ```
 
 ### Вывод 
 
 С сопроцессором х87 получается в 6-7 раз медленнее потому что, существующие расширения `SSE` и `AVX/AVX2` работают быстрее
 ```bash
+Время Double операций с сопроцессором 80387: 0.611243 секунд, Количество иттераций 10000000
+./Время Double операций с сопроцессором 80387: 0.696844 секунд, Количество иттераций 10000000
+Время long double операций с сопроцессором 80387: 0.573448 секунд, Количество иттераций 10000000
+root@61e0530cd5cf:/app/task_1# ./build_no_coprocessor.sh 
 root@61e0530cd5cf:/app/task_1# ./app_no_coprocessor_test.exe 
-Время Double операций с сопроцессором 80387: 0.014321 секунд, Количество иттераций 10000000
-Время Double операций с сопроцессором 80387: 0.010399 секунд, Количество иттераций 10000000
-root@61e0530cd5cf:/app/task_1# ./app_with_coprocessor_test.exe
-Время Double операций с сопроцессором 80387: 0.621283 секунд, Количество иттераций 10000000
-Время Double операций с сопроцессором 80387: 0.705794 секунд, Количество иттераций 10000000
+Время Double операций с сопроцессором 80387: 0.014174 секунд, Количество иттераций 10000000
+Время Double операций с сопроцессором 80387: 0.010288 секунд, Количество иттераций 10000000
+Время long double операций с сопроцессором 80387: 0.562412 секунд, Количество иттераций 10000000
 ```
 
 ## Задание 1.1 Ассемблерная вставка
