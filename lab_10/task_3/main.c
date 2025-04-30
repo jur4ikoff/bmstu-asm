@@ -5,7 +5,9 @@
 #define ERR_INPUT 1
 #define ERR_NO_ROOT 2
 
-// static double seven asm("seven") = 7;
+#define FUNC_FREE_KOEF 7
+
+static double func_free_koef asm("func_free_koef") = 7;
 
 // Функция для которой ищем корень: cos(x^3 + 7)
 double f(double x)
@@ -18,18 +20,17 @@ double f_asm(double x)
 {
     double result;
 
-    float inc = 7.0;
-    __asm__(
-        "fld %1\n"  // push x в st(0)
-        "fld %1\n"  // st(0) = x, st(1) = x
-        "fmulp\n"   // st(0) = x*x  FMULP Умножение с извлечением из стека
-        "fld %1\n"  // st(0) = x, st(1) = x*x
-        "fmulp\n"   // st(0) = x^3
-        "fadd %2\n" // st(0) = x^3 + 7.0
-        "fcos\n"    // st(0) = cos(7.0 + x^3)
-        "fstp %0\n" // Сохраняем результат и выталкиваем из стека
+    __asm__ volatile(
+        "fld %1\n"       // push x в st(0)
+        "fld %1\n"       // st(0) = x, st(1) = x
+        "fmulp\n"        // st(0) = x*x  FMULP Умножение с извлечением из стека
+        "fld %1\n"       // st(0) = x, st(1) = x*x
+        "fmulp\n"        // st(0) = x^3
+        "fadd %[koef]\n" // st(0) = x^3 + 7.0
+        "fcos\n"         // st(0) = cos(7.0 + x^3)
+        "fstp %0\n"      // Сохраняем результат и выталкиваем из стека
         : "=m"(result)
-        : "m"(x), "m"(inc));
+        : "m"(x), [koef] "m"(func_free_koef));
     return result;
 }
 
@@ -45,7 +46,7 @@ double chord_method(double a, double b, int iterations)
     for (int i = 0; i < iterations; i++)
     {
         // Вычисляем новую точку по методу хорд
-        __asm__(
+        __asm__ volatile(
             "fld %[fb]\n" // st(0) = fb
             "fld %[a]\n"  // st(0) = a, st(1) = fb
             "fmulp\n"     // st(0) = a*fb
@@ -63,6 +64,7 @@ double chord_method(double a, double b, int iterations)
               [b] "m"(b),
               [fa] "m"(fa),
               [fb] "m"(fb));
+        // c = (a * fb - b * fa) / (fb - fa);
 
         // Вычисляем значение функции в новой точке
         fc = f_asm(c);
@@ -70,11 +72,13 @@ double chord_method(double a, double b, int iterations)
         // Обновляем границы интервала
         if (fa * fc < 0.0)
         {
+            // Произошел переход через ноль, значит можно сузить правый интервал до c
             b = c;
             fb = fc;
         }
         else
         {
+            // Перехода не произошло, значит сужаем слева
             a = c;
             fa = fc;
         }
@@ -87,10 +91,10 @@ void error_handler(int rc)
 {
     switch (rc)
     {
-        case ERR_INPUT:
-            printf("Ошибка ввода\n");
-        case ERR_NO_ROOT:
-            printf("На данном интервале либо нет корней, либо их четное количество.\n");
+    case ERR_INPUT:
+        printf("Ошибка ввода\n");
+    case ERR_NO_ROOT:
+        printf("На данном интервале либо нет корней, либо их четное количество.\n");
     }
 }
 
