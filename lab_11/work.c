@@ -9,10 +9,7 @@ void matrix_multiply_sse(float *A, float *B, float *C, int L, int M, int N)
     {
         for (int j = 0; j < N; j += 4)
         {
-            __m128 c;
-            __asm__ __volatile__(
-                "xorps xmm0, xmm0\n\t"
-                : "=x"(c));
+            __m128 c = _mm_setzero_ps();
             for (int k = 0; k < M; k++)
             {
                 __m128 a = _mm_set1_ps(A[i * M + k]);
