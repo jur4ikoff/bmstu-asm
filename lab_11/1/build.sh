@@ -8,7 +8,9 @@ mkdir $OUT 2>/dev/null
 
 for file in *.c; do
     base=$(basename -s .c "$file")
-    gcc --std=c99 -O0 -masm=intel -c $file -o $OUT/$base.o
+    # gcc -mavx -O0 -std=c11 -D_POSIX_C_SOURCE=200112L  -c $file -o $OUT/$base.o
+    gcc -std=c99 -msse -msse2 -O0 -c $file -o $OUT/$base.o
+    # -masm=intel
 done
 
 
