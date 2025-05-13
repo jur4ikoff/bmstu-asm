@@ -46,7 +46,7 @@ int main()
     Matrix result;
     try
     {
-        result = matrix1; //  sseMatrixMul(matrix1, matrix2);
+        result = matrix1 * matrix2;
     }
     catch (std::invalid_argument &ex)
     {

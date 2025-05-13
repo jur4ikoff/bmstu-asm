@@ -20,6 +20,7 @@ public:
     void print_matrix();
 
     Matrix &operator=(const Matrix &other);
+    Matrix operator*(Matrix &other);
 
     double **get_matrix_data();
     void set_matrix_data(double **matrixData);
