@@ -1,7 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <immintrin.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 void print_m128(__m128 var)
@@ -60,7 +60,7 @@ void matrix_multiply_sse(float *A, float *B, float *C, int L, int M, int N)
 {
     for (int i = 0; i < L; i++)
     {
-        for (int j = 0; j < N; j += 4)
+        for (int j = 0; j < N; j += 1)
         {
             __m128 c = create_value();
 
@@ -69,9 +69,7 @@ void matrix_multiply_sse(float *A, float *B, float *C, int L, int M, int N)
                 // Значения матриц
                 float fa = A[i * M + k];
                 float fb = B[k * N + j];
-
                 // Временное значение
-                __m128 res = create_value();
 
                 // __m128 a = load_value(A[i * M + k]);
                 // __m128 b = load_value(B[k * N + j]);
@@ -86,8 +84,8 @@ void matrix_multiply_sse(float *A, float *B, float *C, int L, int M, int N)
                     : [a] "x"(fa), [b] "x"(fb)
                     : "memory", "xmm0", "xmm1", "xmm2");
 
-                print_m128(res);
-                c = _mm_add_ps(c, res);
+                // print_m128(c);
+                // c = _mm_add_ps(c, res);
                 // c = _mm_add_ps(c, _mm_mul_ps(a, b));
             }
             _mm_storeu_ps(&C[i * N + j], c);
