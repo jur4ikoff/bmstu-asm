@@ -13,6 +13,7 @@ void matrix_multiply_sse(float *A, float *B, float *C, int L, int M, int N)
             __asm__ __volatile__(
                 "xorps xmm0, xmm0\n\t"
                 : "=x"(c));
+
             for (int k = 0; k < M; k++)
             {
                 __m128 a = _mm_set1_ps(A[i * M + k]);
@@ -20,6 +21,24 @@ void matrix_multiply_sse(float *A, float *B, float *C, int L, int M, int N)
                 c = _mm_add_ps(c, _mm_mul_ps(a, b));
             }
             _mm_storeu_ps(&C[i * N + j], c);
+        }
+    }
+}
+
+void matrix_multipy_default(float *A, float *B, float *C, int L, int M, int N)
+{
+    for (int i = 0; i < L; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            float c = 0;
+            for (int k = 0; k < M; k++)
+            {
+                float a = A[i * M + k];
+                float b = B[k * N + j];
+                c += a * b;
+            }
+            C[i * N + j] = c;
         }
     }
 }
@@ -55,9 +74,9 @@ int main()
 
     // Выделяем память с выравниванием для SSE (16 байт)
     float *A, *B, *C;
-    if (posix_memalign((void **)&A, 16, L * M * sizeof(float)) != 0 ||
-        posix_memalign((void **)&B, 16, M * N * sizeof(float)) != 0 ||
-        posix_memalign((void **)&C, 16, L * N * sizeof(float)) != 0)
+    if (posix_memalign((void **)&A, 8, L * M * sizeof(float)) != 0 ||
+        posix_memalign((void **)&B, 8, M * N * sizeof(float)) != 0 ||
+        posix_memalign((void **)&C, 8, L * N * sizeof(float)) != 0) // Было выравнивкние 16
     {
         printf("Memory allocation failed\n");
         return 1;
@@ -98,6 +117,11 @@ int main()
     // Проверяем поддержку SSE (все современные x86-64 процессоры поддерживают SSE2)
     printf("Using SSE implementation\n");
     matrix_multiply_sse(A, B, C, L, M, N);
+
+    printf("Result matrix C (%dx%d):\n", L, N);
+    print_matrix(C, L, N);
+
+    matrix_multipy_default(A, B, C, L, M, N);
 
     printf("Result matrix C (%dx%d):\n", L, N);
     print_matrix(C, L, N);
