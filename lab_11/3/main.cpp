@@ -1,6 +1,6 @@
 #include <iostream>
 #include <exception>
-#include "matrix.h"
+#include "matrix.hpp"
 
 #define ERR_WRONG_SIZE_TEXT "Неверно введен размер матрицы"
 #define ERR_WRONG_SIZE 1
