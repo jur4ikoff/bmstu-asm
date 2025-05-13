@@ -13,76 +13,76 @@ Matrix::Matrix(int n, int m)
     this->allocate_matrix();
 }
 
-// void Matrix::readMatrix()
-// {
-//     for (int i = 0; i < this->rows; i++)
-//     {
-//         for (int j = 0; j < this->cols; j++)
-//         {
-//             double elem = 0;
-//             std::cin >> elem;
-//             if (std::cin.fail())
-//             {
-//                 throw std::runtime_error("Data error!");
-//             }
-//             matrix_data[i][j] = elem;
-//         }
-//     }
-// }
+void Matrix::read_matrix()
+{
+    double elem = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            std::cin >> elem;
+            if (std::cin.fail())
+            {
+                throw std::runtime_error("Ошибка, ввода");
+            }
+            matrix_data[i][j] = elem;
+        }
+    }
+}
 
-// Matrix &Matrix::operator=(const Matrix &other)
-// {
-//     if (this != &other)
-//     {
-//         freeMatrix();
-//         rows = other.rows;
-//         cols = other.cols;
-//         if (rows > 0 && cols > 0)
-//         {
-//             matrix_data = (double **)malloc(rows * sizeof(double *));
-//             if (!matrix_data)
-//             {
-//                 throw std::runtime_error("Memory allocation failed!");
-//             }
-//             for (size_t i = 0; i < rows; i++)
-//             {
-//                 matrix_data[i] = (double *)malloc(cols * sizeof(double));
-//                 if (!matrix_data[i])
-//                 {
-//                     throw std::runtime_error("Memory allocation failed!");
-//                 }
-//                 std::memcpy(matrix_data[i], other.matrix_data[i], cols * sizeof(double));
-//             }
-//         }
-//         else
-//         {
-//             matrix_data = nullptr;
-//         }
-//     }
-//     return *this;
-// }
+void Matrix::print_matrix()
+{
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            std::cout << matrix_data[i][j] << "\t";
+        }
+        std::cout << '\n';
+    }
+}
 
-// void Matrix::printMatrix()
-// {
-//     for (size_t i = 0; i < rows; i++)
-//     {
-//         for (size_t j = 0; j < cols; j++)
-//         {
-//             std::cout << matrix_data[i][j] << " ";
-//         }
-//         std::cout << '\n';
-//     }
-// }
+Matrix &Matrix::operator=(const Matrix &other)
+{
+    if (this != &other)
+    {
+        free_matrix();
+        rows = other.rows;
+        cols = other.cols;
+        if (rows > 0 && cols > 0)
+        {
+            matrix_data = (double **)malloc(rows * sizeof(double *));
+            if (!matrix_data)
+            {
+                throw std::runtime_error("Memory allocation failed!");
+            }
+            for (int i = 0; i < rows; i++)
+            {
+                matrix_data[i] = (double *)malloc(cols * sizeof(double));
+                if (!matrix_data[i])
+                {
+                    throw std::runtime_error("Memory allocation failed!");
+                }
+                std::memcpy(matrix_data[i], other.matrix_data[i], cols * sizeof(double));
+            }
+        }
+        else
+        {
+            matrix_data = nullptr;
+        }
+    }
+    return *this;
+}
 
-// double **Matrix::getMatrixData()
-// {
-//     return matrix_data;
-// }
+double **Matrix::get_matrix_data()
+{
+    return matrix_data;
+}
 
-// void Matrix::setMatrixData(double **matrixData)
-// {
-//     matrix_data = matrixData;
-// }
+void Matrix::set_matrix_data(double **matrixData)
+{
+    matrix_data = matrixData;
+}
 
 // Matrix sseMatrixMul(Matrix &m1, Matrix &m2)
 // {
@@ -234,6 +234,10 @@ void Matrix::free_matrix()
 
 void Matrix::allocate_matrix()
 {
+    if (rows <= 0 || cols <= 0)
+    {
+        throw std::runtime_error("No initialize size");
+    }
     if (matrix_data)
     {
         free_matrix();

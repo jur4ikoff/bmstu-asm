@@ -7,13 +7,22 @@
 class Matrix
 {
 public:
+    Matrix()
+    {
+        rows = 0;
+        cols = 0;
+        matrix_data = nullptr;
+    }
+
     Matrix(int n, int m);
 
-    // Matrix &operator=(const Matrix &other);
-    // void readMatrix() override;
-    // void printMatrix() override;
-    // double **getMatrixData();
-    // void setMatrixData(double **matrixData);
+    void read_matrix();
+    void print_matrix();
+
+    Matrix &operator=(const Matrix &other);
+
+    double **get_matrix_data();
+    void set_matrix_data(double **matrixData);
 
     ~Matrix()
     {
