@@ -92,95 +92,95 @@ Matrix Matrix::operator*(Matrix &other)
     size_t M = this->cols;
     size_t N = other.cols;
 
-__asm__ volatile(
-    "xor %%r8, %%r8\n\t"          // r8 = i (row index)
-    
-    "iLoop:\n\t"
-    "cmp %[L], %%r8\n\t"
-    "jge exitIloop\n\t"
-    
-    "xor %%r9, %%r9\n\t"          // r9 = j (column index)
-    
-    "jLoop:\n\t"
-    "cmp %[N], %%r9\n\t"
-    "jge exitJloop\n\t"
-    
-    "pxor %%xmm2, %%xmm2\n\t"     // xmm2 = sum accumulator (0)
-    
-    "xor %%r10, %%r10\n\t"         // r10 = k (inner dimension index)
-    
-    "kLoop:\n\t"
-    "mov %[M], %%rcx\n\t"
-    "sub %%r10, %%rcx\n\t"         // rcx = M - k
-    "cmp $2, %%rcx\n\t"
-    "jl remainder\n\t"             // if less than 2 elements remain
-    
-    // Main processing - 2 elements at a time
-    // Load matrix1[i][k] and matrix1[i][k+1]
-    "mov %[matrix1], %%r11\n\t"
-    "mov (%%r11, %%r8, 8), %%r11\n\t"  // r11 = matrix1[i]
-    "movupd (%%r11, %%r10, 8), %%xmm0\n\t" // xmm0 = matrix1[i][k:k+1]
-    
-    // Load matrix2[k][j] and matrix2[k+1][j]
-    "mov %[matrix2], %%r12\n\t"
-    "mov (%%r12, %%r10, 8), %%rax\n\t"  // rax = matrix2[k]
-    "movsd (%%rax, %%r9, 8), %%xmm1\n\t" // xmm1[0] = matrix2[k][j]
-    "mov 8(%%r12, %%r10, 8), %%rax\n\t"  // rax = matrix2[k+1] 
-    "movsd (%%rax, %%r9, 8), %%xmm3\n\t" // xmm3[0] = matrix2[k+1][j]
-    "unpcklpd %%xmm3, %%xmm1\n\t"       // xmm1 = {matrix2[k][j], matrix2[k+1][j]}
-    
-    // Multiply and accumulate
-    "mulpd %%xmm1, %%xmm0\n\t"
-    "addpd %%xmm0, %%xmm2\n\t"
-    
-    "add $2, %%r10\n\t"            // k += 2
-    "jmp kLoop\n\t"
-    
-    "remainder:\n\t"
-    "cmp %[M], %%r10\n\t"
-    "jge exitKloop\n\t"
-    
-    // Process single remaining element
-    "mov %[matrix1], %%r11\n\t"
-    "mov (%%r11, %%r8, 8), %%r11\n\t"  // r11 = matrix1[i]
-    "movsd (%%r11, %%r10, 8), %%xmm0\n\t" // xmm0[0] = matrix1[i][k]
-    
-    "mov %[matrix2], %%r12\n\t"
-    "mov (%%r12, %%r10, 8), %%rax\n\t"  // rax = matrix2[k]
-    "movsd (%%rax, %%r9, 8), %%xmm1\n\t" // xmm1[0] = matrix2[k][j]
-    
-    "mulsd %%xmm1, %%xmm0\n\t"
-    "addsd %%xmm0, %%xmm2\n\t"
-    
-    "inc %%r10\n\t"               // k++
-    "jmp remainder\n\t"
-    
-    "exitKloop:\n\t"
-    // Horizontal sum of xmm2
-    "movapd %%xmm2, %%xmm0\n\t"
-    "unpckhpd %%xmm2, %%xmm0\n\t" // xmm0 = {high(xmm2), ?}
-    "addsd %%xmm0, %%xmm2\n\t"    // xmm2[0] += xmm0[0]
-    
-    // Store result
-    "mov %[resMatrixData], %%r11\n\t"
-    "mov (%%r11, %%r8, 8), %%r11\n\t"  // r11 = resMatrixData[i]
-    "movsd %%xmm2, (%%r11, %%r9, 8)\n\t" // resMatrixData[i][j] = xmm2[0]
-    
-    "inc %%r9\n\t"                // j++
-    "jmp jLoop\n\t"
-    
-    "exitJloop:\n\t"
-    "inc %%r8\n\t"                // i++
-    "jmp iLoop\n\t"
-    
-    "exitIloop:\n\t"
-    :
-    : [L] "r"(L), [N] "r"(N), [M] "r"(M),
-      [matrix1] "r"(matrix1), [matrix2] "r"(matrix2), 
-      [resMatrixData] "r"(res_matrix_data)
-    : "cc", "r8", "r9", "r10", "r11", "r12", "rax", "rcx", 
-      "xmm0", "xmm1", "xmm2", "xmm3", "memory"
-);
+    __asm__ volatile(
+        "xor %%r8, %%r8\n\t" // i = 0
+        "iLoop:\n\t"
+        "cmp %[L], %%r8\n\t" // сравниваем i и L
+        "jge exitIloop\n\t"  // jump great equal
+
+        "xor %%r9, %%r9\n\t" // j = 0
+        "jLoop:\n\t"
+        "cmp %[N], %%r9\n\t"
+        "jge exitJloop\n\t" // jump if (j >= N)
+
+        "pxor %%xmm2, %%xmm2\n\t" // xmm2 = 0, Аккумулятор для суммы в результирующей матрице ‰
+        "xor %%r10, %%r10\n\t"    // k = 0
+        "kLoop:\n\t"
+        "mov %[M], %%rcx\n\t"
+        "sub %%r10, %%rcx\n\t" // rcx = M - k
+        "cmp $2, %%rcx\n\t"
+        "jl remainder\n\t" // if less than 2 elements remain
+
+        // Загружаем matrix[i][k:k+1]
+        "mov %[matrix1], %%r11\n\t"
+        "mov (%%r11, %%r8, 8), %%r11\n\t" // r11 = matrix1[i]
+        // Загружаем два double из памяти в регистр %%xmm0
+        // movupd: копирование невыровненных 8-байтных чисел
+        "movupd (%%r11, %%r10, 8), %%xmm0\n\t" // xmm0 = matrix1[i][k:k+1]
+
+        // Загружаем matrix2[k:k+1][j]
+        "mov %[matrix2], %%r12\n\t"
+        "mov (%%r12, %%r10, 8), %%rax\n\t" // rax = matrix2[k]
+        // MOVSD — Переслать двойное слово из строки в строку
+        "movsd (%%rax, %%r9, 8), %%xmm1\n\t" // xmm1[0] = matrix2[k][j]
+        "mov 8(%%r12, %%r10, 8), %%rax\n\t"  // rax = matrix2[k+1]
+        "movsd (%%rax, %%r9, 8), %%xmm3\n\t" // xmm3[0] = matrix2[k+1][j]
+        "unpcklpd %%xmm3, %%xmm1\n\t"        // xmm1 = {matrix2[k][j], matrix2[k+1][j]}
+
+        // Умножение и добавление к результату
+        "mulpd %%xmm1, %%xmm0\n\t"
+        "addpd %%xmm0, %%xmm2\n\t"
+
+        "add $2, %%r10\n\t" // k += 2
+        "jmp kLoop\n\t"
+
+        "remainder:\n\t"
+        "cmp %[M], %%r10\n\t"
+        "jge exitKloop\n\t" // if (k >= M) {exitKloop}
+
+        // Обработка случая, когда остался 1 элемент
+        "mov %[matrix1], %%r11\n\t"           // r11 = matrix
+        "mov (%%r11, %%r8, 8), %%r11\n\t"     // r11 = matrix1[i]
+        "movsd (%%r11, %%r10, 8), %%xmm0\n\t" // xmm0[0] = matrix1[i][k]
+
+        "mov %[matrix2], %%r12\n\t"
+        "mov (%%r12, %%r10, 8), %%rax\n\t"   // rax = matrix2[k]
+        "movsd (%%rax, %%r9, 8), %%xmm1\n\t" // xmm1[0] = matrix2[k][j]
+
+        // Умножаем и добавляем к результату
+        "mulsd %%xmm1, %%xmm0\n\t"
+        "addsd %%xmm0, %%xmm2\n\t"
+
+        "inc %%r10\n\t" // k++
+        "jmp remainder\n\t"
+
+        "exitKloop:\n\t"
+
+        // movapd (Move Aligned Packed Double)
+        "movapd %%xmm2, %%xmm0\n\t"   // xmm0 = xmm2
+        "unpckhpd %%xmm2, %%xmm0\n\t" // xmm0 = {high(xmm2), ?}
+        //  (Add Scalar Double) — складывает только нижние 64 бита
+        "addsd %%xmm0, %%xmm2\n\t" // xmm2[0] += xmm0[0]
+
+        // Помещаем результат в результирующую матрицу
+        "mov %[res_matrix_data], %%r11\n\t"
+        "mov (%%r11, %%r8, 8), %%r11\n\t"    // r11 = res_matrix_data[i]
+        "movsd %%xmm2, (%%r11, %%r9, 8)\n\t" // res_matrix_data[i][j] = xmm2[0]
+
+        "inc %%r9\n\t" // j++
+        "jmp jLoop\n\t"
+
+        "exitJloop:\n\t"
+        "inc %%r8\n\t" // i++
+        "jmp iLoop\n\t"
+
+        "exitIloop:\n\t"
+        :
+        : [L] "r"(L), [N] "r"(N), [M] "r"(M),
+          [matrix1] "r"(matrix1), [matrix2] "r"(matrix2),
+          [res_matrix_data] "r"(res_matrix_data)
+        : "cc", "r8", "r9", "r10", "r11", "r12", "rax", "rcx",
+          "xmm0", "xmm1", "xmm2", "xmm3", "memory");
 
     return res_matrix;
 }
