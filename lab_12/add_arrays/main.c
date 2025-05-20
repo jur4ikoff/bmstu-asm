@@ -31,6 +31,7 @@ void add_arrays_neon_asm(float *a, float *b, float *result, int size)
             // Складываем векторы (q0 = q0 + q1)
             "fadd v2.4s, v0.4s, v1.4s\n"
             // Сохраняем результат
+            // st1 инструкция сохранения данных из NEON-регистра в память
             "st1 {v2.4s}, [%2]\n"
             : // Нет выходных операндов
             : "r"(a + i), "r"(b + i), "r"(result + i)
@@ -108,40 +109,3 @@ exit:
     print_err_msg(rc);
     return rc;
 }
-
-// #include <stdio.h>
-
-// #define SIZE 8
-
-// void add_arrays_neon_asm(float* a, float* b, float* result, int size) {
-//     for (int i = 0; i < size; i += 4) {
-//         __asm__ volatile (
-//             // Загружаем 4 элемента из массива a в q0
-//             "ld1 {v0.4s}, [%0]\n"
-//             // Загружаем 4 элемента из массива b в q1
-//             "ld1 {v1.4s}, [%1]\n"
-//             // Складываем векторы (q0 = q0 + q1)
-//             "fadd v2.4s, v0.4s, v1.4s\n"
-//             // Сохраняем результат
-//             "st1 {v2.4s}, [%2]\n"
-//             : // Нет выходных операндов
-//             : "r" (a + i), "r" (b + i), "r" (result + i)
-//             : "v0", "v1", "v2", "memory"
-//         );
-//     }
-// }
-
-// int main() {
-//     float a[SIZE] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0};
-//     float b[SIZE] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
-//     float result[SIZE] = {0};
-
-//     add_arrays_neon_asm(a, b, result, SIZE);
-
-//     printf("Result of array addition (ASM version):\n");
-//     for (int i = 0; i < SIZE; i++) {
-//         printf("%.1f + %.1f = %.1f\n", a[i], b[i], result[i]);
-//     }
-
-//     return 0;
-// }
