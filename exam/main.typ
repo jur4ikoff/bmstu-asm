@@ -45,10 +45,11 @@
 #set par(justify: true)
 #set text(font: "Arial")
 #set text(size: 11pt)
+#set par(leading: 0.8em)
 #set page(margin: 1.2cm)
 
 = Подготовка к экзамену по МЗЯП
-#heading-with-box[4 Семестр ИУ7]
+#heading-with-box[4 Семестр ИУ7 \ Поставь звездочку #link("https://github.com/jur4ikoff")[на репозиторий🌐]]
 
 
 #table_of_contents(outlined: false)[Оглавление]
